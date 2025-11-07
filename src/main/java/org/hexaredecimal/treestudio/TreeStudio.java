@@ -62,10 +62,12 @@ public class TreeStudio extends JFrame {
 	public static TreeStudio frame;
 
 	public TreeStudio() {
-		setTitle("Fractal Tree Simulator - Refactor");
+		setTitle("TreeStudio");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setLayout(new BorderLayout());
 
+		setIconImage(Icons.getIcon("appicon").getImage());
+		
 		createControlPanel();
 		createBottomPanel();
 		JScrollPane scrollPane = new JScrollPane(controlPanel);
