@@ -14,22 +14,28 @@ import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import javax.imageio.ImageIO;
 import org.hexaredecimal.treestudio.config.TreeConfig;
 import org.hexaredecimal.treestudio.events.AppActions;
 import org.hexaredecimal.treestudio.ui.ColorPickerButton;
+import org.hexaredecimal.treestudio.ui.ExportGifDialogPanel;
+import org.hexaredecimal.treestudio.ui.ExportPngDialogPanel;
 import org.hexaredecimal.treestudio.ui.FileTree;
 import org.hexaredecimal.treestudio.ui.StrippedProgressBar;
 import org.hexaredecimal.treestudio.ui.TreePanel;
+import org.hexaredecimal.treestudio.utils.Binary;
+import org.hexaredecimal.treestudio.utils.FileFilter;
 
-public class TreeStudio extends JFrame {
+public final class TreeStudio extends JFrame {
 
 	public TreePanel treePanel;
+	public String selectedTreeFile = null;
 	private JPanel controlPanel;
 	private JPanel colorsPanel;
 
 	JLabel lastSaved = new JLabel("Saved: Never");
 	JLabel exportLabel = new JLabel("Export: ");
-	JLabel currentFilePath = new JLabel("Path");
+	JLabel currentFilePath = new JLabel("[N/A]");
 	JLabel MemoryUsage = new JLabel("MemoryUsage");
 
 // Slider references
@@ -60,14 +66,15 @@ public class TreeStudio extends JFrame {
 	public ColorPickerButton flowerPolenColor;
 
 	private StrippedProgressBar exportBar;
+	private FileTree fileTree;
 
 	// Config object holding references to controls
-	private TreeConfig config;
+	private final TreeConfig config;
 
 	public static TreeStudio frame;
 
 	public TreeStudio() {
-		setTitle("TreeStudio");
+		closeTreeFile();
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setLayout(new BorderLayout());
 
@@ -89,10 +96,10 @@ public class TreeStudio extends JFrame {
 		treePanel = new TreePanel(config);
 		treePanel.setPreferredSize(new Dimension(900, 600));
 
-		var props = new FileTree();
-		props.setPreferredSize(new Dimension(900, 200));
+		fileTree = new FileTree();
+		fileTree.setPreferredSize(new Dimension(900, 200));
 
-		JSplitPane propsSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, props, colorScrollPane);
+		JSplitPane propsSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, fileTree, colorScrollPane);
 		propsSplit.setDividerLocation(350);
 
 		JSplitPane controlSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, treePanel, scrollPane);
@@ -382,78 +389,224 @@ public class TreeStudio extends JFrame {
 		return slider;
 	}
 
-	private JButton createColorButton(String label, Color initial, java.util.function.Consumer<Color> listener) {
-		JButton button = new JButton(label);
-		button.setAlignmentX(Component.LEFT_ALIGNMENT);
-		button.setMaximumSize(new Dimension(300, 30));
-		button.addActionListener(e -> {
-			Color chosen = JColorChooser.showDialog(this, label, initial);
-			if (chosen != null) {
-				listener.accept(chosen);
-			}
-		});
-		return button;
-	}
+	public void loadTreeBinary(String path) {
+		try (Binary bin = new Binary(path, true, true)) {
+			var t = (char) bin.readByte();
+			var r = (char) bin.readByte();
+			var e = (char) bin.readByte();
+			var e2 = (char) bin.readByte();
 
-	public void exportPNG() {
-		JFileChooser chooser = new JFileChooser();
-		chooser.setDialogTitle("Save Tree as PNG");
-		if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
-			try {
-				java.io.File file = chooser.getSelectedFile();
-				if (!file.getName().toLowerCase().endsWith(".png")) {
-					file = new java.io.File(file.getAbsolutePath() + ".png");
-				}
-				javax.imageio.ImageIO.write(treePanel.getBuffer(), "PNG", file);
-				JOptionPane.showMessageDialog(this, "Tree exported successfully!");
-			} catch (IOException ex) {
-				JOptionPane.showMessageDialog(this, "Error exporting: " + ex.getMessage());
+			if (t != 't' || r != 'r' || e != 'e' || e2 != 'e') {
+				JOptionPane.showMessageDialog(this, "Invalid file header", "Error", JOptionPane.ERROR_MESSAGE);
+				return;
 			}
+
+			sfM.setValue(bin.readInt());
+			sfS.setValue(bin.readInt());
+			sthM.setValue(bin.readInt());
+			sthS.setValue(bin.readInt());
+			sgam.setValue(bin.readInt());
+			sL.setValue(bin.readInt());
+			sd.setValue(bin.readInt());
+			sC.setValue(bin.readInt());
+			lC.setValue(bin.readInt());
+			lS.setValue(bin.readInt());
+			lT.setValue(bin.readInt());
+			sW.setValue(bin.readInt());
+			sS.setValue(bin.readInt());
+			sTrunkHeight.setValue(bin.readInt());
+			sTrunkWidth.setValue(bin.readInt());
+			sBranchLength.setValue(bin.readInt());
+			sTaper.setValue(bin.readInt());
+			sFlowerDensity.setValue(bin.readInt());
+
+			branchColor.setSelectedColor(new Color(bin.readInt()));
+			leafBaseColor.setSelectedColor(new Color(bin.readInt()));
+			bgColor.setSelectedColor(new Color(bin.readInt()));
+			flowerColor.setSelectedColor(new Color(bin.readInt()));
+			flowerPolenColor.setSelectedColor(new Color(bin.readInt()));
+		} catch (IOException ex) {
+			JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 		}
 	}
 
-	public void exportGIF() {
-		// Simplified: write currently buffered image frames into a GIF using GifSequenceWriter
-		new Thread(() -> {
-			var file = new File("anim.gif");
-			if (!file.getName().toLowerCase().endsWith(".gif")) {
-				file = new File(file.getAbsolutePath() + ".gif");
-			}
-			int delay = 0;
-			GifImage gif = new GifImage();
-			gif.setOutputFile(file);
-			gif.repeatInfinitely(true);
+	private void saveTreeBinary(String path) {
+		try (Binary bin = new Binary(path, false, true)) {
+			bin.write((byte) 't');
+			bin.write((byte) 'r');
+			bin.write((byte) 'e');
+			bin.write((byte) 'e');
 
-			int frames = 60 * 4;
-			treePanel.timer.stop();
-			for (int i = 0; i < frames; ++i) {
-				BufferedImage exportFrame = new BufferedImage(treePanel.getWidth(), treePanel.getHeight(), BufferedImage.TYPE_INT_ARGB);
-				Graphics graphics = exportFrame.getGraphics();
-				graphics.setColor(Color.WHITE);
-				graphics.fillRect(0, 0, treePanel.getWidth(), treePanel.getHeight());
-				treePanel.paint(graphics);
-				debugGifFrame(i, graphics);
-				graphics.dispose();
+			bin.write(sfM.getValue());
+			bin.write(sfS.getValue());
+			bin.write(sthM.getValue());
+			bin.write(sthS.getValue());
+			bin.write(sgam.getValue());
+			bin.write(sL.getValue());
+			bin.write(sd.getValue());
+			bin.write(sC.getValue());
+			bin.write(lC.getValue());
+			bin.write(lS.getValue());
+			bin.write(lT.getValue());
+			bin.write(sW.getValue());
+			bin.write(sS.getValue());
+			bin.write(sTrunkHeight.getValue());
+			bin.write(sTrunkWidth.getValue());
+			bin.write(sBranchLength.getValue());
+			bin.write(sTaper.getValue());
+			bin.write(sFlowerDensity.getValue());
 
-				treePanel.nextFrame();
-				gif.addFrame(exportFrame);
-
-				double percent = ((double) i) / frames;
-				exportBar.setValue((int) (percent * 100));
-			}
-			treePanel.timer.start();
-
-			gif.save();
-			JOptionPane.showMessageDialog(this, "GIF exported successfully!");
-			exportBar.setValue(0);
-		}).start();
+			//colors
+			bin.write(branchColor.getSelectedColor().getRGB());
+			bin.write(leafBaseColor.getSelectedColor().getRGB());
+			bin.write(bgColor.getSelectedColor().getRGB());
+			bin.write(flowerColor.getSelectedColor().getRGB());
+			bin.write(flowerPolenColor.getSelectedColor().getRGB());
+		} catch (IOException ex) {
+			JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+		}
 	}
 
-	private void debugGifFrame(int frame, Graphics graphics) {
-		graphics.setColor(Color.BLACK);
-		graphics.drawRect(30, 30, 100, 60);
-		graphics.setColor(Color.RED);
-		graphics.drawString("FRAME " + frame, 50, 50);
+	public void saveTree() {
+		if (selectedTreeFile == null) {
+			var chooser = new JFileChooser(".");
+			chooser.setFileFilter(FileFilter.treeFilter);
+			chooser.setDialogTitle("Save Tree ");
+			if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+				var file = chooser.getSelectedFile();
+				if (!file.getName().toLowerCase().endsWith(".tree")) {
+					file = new File(file.getAbsolutePath() + ".tree");
+				}
+				selectedTreeFile = file.getAbsolutePath();
+				saveTreeBinary(selectedTreeFile);
+				this.setTitle("TreeStudio - " + selectedTreeFile);
+				currentFilePath.setText("[" + selectedTreeFile + "]");
+				fileTree.refreshTree();
+			}
+			return;
+		}
+
+		saveTreeBinary(selectedTreeFile);
+	}
+
+	public void saveTreeAs() {
+		var chooser = new JFileChooser(".");
+		chooser.setFileFilter(FileFilter.treeFilter);
+		chooser.setDialogTitle("Save Tree As");
+		if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+			var file = chooser.getSelectedFile();
+			if (!file.getName().toLowerCase().endsWith(".tree")) {
+				file = new File(file.getAbsolutePath() + ".tree");
+			}
+			selectedTreeFile = file.getAbsolutePath();
+			saveTreeBinary(selectedTreeFile);
+			treePanel.regenerateTree();
+			this.setTitle("TreeStudio - " + selectedTreeFile);
+			currentFilePath.setText("[" + selectedTreeFile + "]");
+			fileTree.refreshTree();
+		}
+	}
+
+	public void openTreeFile() {
+		var chooser = new JFileChooser(".");
+		chooser.setFileFilter(FileFilter.treeFilter);
+		chooser.setDialogTitle("Open Tree file");
+		if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+			var file = chooser.getSelectedFile();
+			selectedTreeFile = file.getAbsolutePath();
+			loadTreeBinary(selectedTreeFile);
+			treePanel.regenerateTree();
+			this.setTitle("TreeStudio - " + selectedTreeFile);
+			currentFilePath.setText("[" + selectedTreeFile + "]");
+		}
+	}
+
+	public void closeTreeFile() {
+		selectedTreeFile = null;
+		this.setTitle("TreeStudio");
+		currentFilePath.setText("[No Tree file loaded]");
+	}
+
+	public void exportPNG() {
+
+		var export = new ExportPngDialogPanel();
+		var dialog = new JDialog(this, "Export Gif", true);
+		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		dialog.setLayout(new BorderLayout());
+		dialog.add(export, BorderLayout.CENTER);
+
+		export.addOnCancelListener(e -> dialog.dispose());
+		export.addOnDoneListener(e -> {
+			try {
+				var selectedFile = export.getSelectedPath();
+				var file = new File(selectedFile);
+				if (!file.getName().toLowerCase().endsWith(".png")) {
+					file = new java.io.File(file.getAbsolutePath() + ".png");
+				}
+				ImageIO.write(treePanel.getBuffer(), "PNG", file);
+				dialog.dispose();
+				JOptionPane.showMessageDialog(this, "Tree exported successfully!");
+			} catch (IOException ex) {
+			}
+		});
+
+		dialog.pack();
+		dialog.setLocationRelativeTo(this);
+		dialog.setVisible(true);
+	}
+
+	public void exportGIF() {
+
+		var export = new ExportGifDialogPanel();
+		var dialog = new JDialog(this, "Export Gif", true);
+		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		dialog.setLayout(new BorderLayout());
+		dialog.add(export, BorderLayout.CENTER);
+
+		export.addOnCancelListener(e -> dialog.dispose());
+		export.addOnDoneListener(e -> {
+			var selectedFile = export.getSelectedPath();
+			new Thread(() -> {
+				var file = new File(selectedFile);
+				if (!file.getName().toLowerCase().endsWith(".gif")) {
+					file = new File(file.getAbsolutePath() + ".gif");
+				}
+
+				GifImage gif = new GifImage();
+				gif.setOutputFile(file);
+				gif.repeatInfinitely(true);
+
+				int frames = export.getFrames();
+				treePanel.timer.stop();
+				exportBar.setShowValue(true);
+				for (int i = 0; i < frames; ++i) {
+					BufferedImage exportFrame = new BufferedImage(treePanel.getWidth(), treePanel.getHeight(), BufferedImage.TYPE_INT_ARGB);
+					Graphics graphics = exportFrame.getGraphics();
+					graphics.setColor(Color.WHITE);
+					graphics.fillRect(0, 0, treePanel.getWidth(), treePanel.getHeight());
+					treePanel.paint(graphics);
+					graphics.dispose();
+
+					treePanel.nextFrame();
+					gif.addFrame(exportFrame);
+
+					double percent = ((double) i) / frames;
+					exportBar.setValue((int) (percent * 100));
+				}
+				treePanel.timer.start();
+
+				gif.save();
+				dialog.dispose();
+				JOptionPane.showMessageDialog(this, "GIF exported successfully!");
+				exportBar.setShowValue(false);
+				exportBar.setValue(0);
+			}).start();
+
+		});
+
+		dialog.pack();
+		dialog.setLocationRelativeTo(this);
+		dialog.setVisible(true);
 	}
 
 	public static void start(String[] args) {
@@ -477,4 +630,5 @@ public class TreeStudio extends JFrame {
 			frame.setVisible(true);
 		});
 	}
+
 }
