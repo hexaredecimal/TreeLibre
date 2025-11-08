@@ -1,20 +1,17 @@
 package org.hexaredecimal.treestudio.ui;
 
-import javax.swing.JTree;
+
 import javax.swing.*;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 
-/**
- *
- * @author hexaredecimal
- */
-public class FileTree extends JPanel{
-	
+import org.hexaredecimal.treestudio.TreeStudio;
+
+public class FileTree extends JPanel {
+
 	private JTree tree;
 	private DefaultTreeModel treeModel;
 
@@ -26,7 +23,7 @@ public class FileTree extends JPanel{
 		tree = new JTree(treeModel);
 		tree.setCellRenderer(new FileTreeCellRenderer());
 
-		tree.setComponentPopupMenu(createContextMenu());
+		tree.setComponentPopupMenu(new JPopupMenu());
 		tree.addMouseListener(new TreeMouseListener());
 
 		JScrollPane scrollPane = new JScrollPane(tree);
@@ -36,7 +33,7 @@ public class FileTree extends JPanel{
 	private DefaultMutableTreeNode createTreeNodes(File fileRoot) {
 		DefaultMutableTreeNode node = new DefaultMutableTreeNode(fileRoot);
 		if (fileRoot.isDirectory()) {
-			File[] files = fileRoot.listFiles();
+			File[] files = fileRoot.listFiles(f -> f.isDirectory() || f.getName().endsWith(".tree"));
 			if (files != null) {
 				for (File file : files) {
 					node.add(createTreeNodes(file));
@@ -46,96 +43,141 @@ public class FileTree extends JPanel{
 		return node;
 	}
 
-	private void refreshTree() {
+	public void refreshTree() {
 		File rootFile = new File(System.getProperty("user.dir"));
 		DefaultMutableTreeNode newRoot = createTreeNodes(rootFile);
 		treeModel.setRoot(newRoot);
 		treeModel.reload();
 	}
 
-	private JPopupMenu createContextMenu() {
-		return new JPopupMenu(); // dummy, context is built dynamically
-	}
-
 	private class TreeMouseListener extends MouseAdapter {
 
 		@Override
 		public void mousePressed(MouseEvent e) {
-			if (SwingUtilities.isRightMouseButton(e)) {
-				int selRow = tree.getClosestRowForLocation(e.getX(), e.getY());
-				tree.setSelectionRow(selRow);
-				TreePath selPath = tree.getPathForLocation(e.getX(), e.getY());
+			handleMouseEvent(e);
+		}
 
-				if (selPath == null) {
-					return;
-				}
-				DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) selPath.getLastPathComponent();
-				var file = (File)selectedNode.getUserObject();
+		@Override
+		public void mouseReleased(MouseEvent e) {
+			handleMouseEvent(e);
+		}
 
-				JPopupMenu menu = new JPopupMenu();
-				if (file.isDirectory()) {
-					JMenuItem addFolder = new JMenuItem("Add Folder");
-					JMenuItem addFile = new JMenuItem("Add File");
-					JMenuItem delete = new JMenuItem("Delete Folder");
-
-					addFolder.addActionListener(ev -> {
-						String name = JOptionPane.showInputDialog("Enter folder name:");
-						if (name != null && !name.isBlank()) {
-							File newDir = new File(file, name);
-							if (!newDir.exists()) {
-								newDir.mkdir();
-							}
-							refreshTree();
-						}
-					});
-
-					addFile.addActionListener(ev -> {
-						String name = JOptionPane.showInputDialog("Enter file name:");
-						if (name != null && !name.isBlank()) {
-							File newFile = new File(file, name);
-							try {
-								if (!newFile.exists()) {
-									newFile.createNewFile();
-								}
-								refreshTree();
-							} catch (IOException ex) {
-								ex.printStackTrace();
-							}
-						}
-					});
-
-					delete.addActionListener(ev -> {
-						int confirm = JOptionPane.showConfirmDialog(null, "Delete this folder?", "Confirm", JOptionPane.YES_NO_OPTION);
-						if (confirm == JOptionPane.YES_OPTION) {
-							deleteRecursively(file);
-							refreshTree();
-						}
-					});
-
-					menu.add(addFolder);
-					menu.add(addFile);
-					menu.addSeparator();
-					menu.add(delete);
-				} else {
-					JMenuItem open = new JMenuItem("Open File");
-					JMenuItem delete = new JMenuItem("Delete File");
-
-					open.addActionListener(ev -> System.out.println("Opening file: " + file.getAbsolutePath()));
-					delete.addActionListener(ev -> {
-						int confirm = JOptionPane.showConfirmDialog(null, "Delete this file?", "Confirm", JOptionPane.YES_NO_OPTION);
-						if (confirm == JOptionPane.YES_OPTION) {
-							file.delete();
-							refreshTree();
-						}
-					});
-
-					menu.add(open);
-					menu.addSeparator();
-					menu.add(delete);
-				}
-
-				menu.show(tree, e.getX(), e.getY());
+		private void handleMouseEvent(MouseEvent e) {
+			var selPath = tree.getPathForLocation(e.getX(), e.getY());
+			if (selPath == null) {
+				selPath = new TreePath(treeModel.getRoot()); // default to root
 			}
+			var selectedNode = (DefaultMutableTreeNode) selPath.getLastPathComponent();
+			var file = (File) selectedNode.getUserObject();
+
+			if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 2) {
+				if (!file.isDirectory()) {
+					TreeStudio.frame.selectedTreeFile = file.getAbsolutePath();
+					TreeStudio.frame.setTitle("TreeStudio - " + file.getAbsolutePath());
+					TreeStudio.frame.loadTreeBinary(file.getAbsolutePath());
+					TreeStudio.frame.treePanel.regenerateTree();
+				}
+			} else if (SwingUtilities.isRightMouseButton(e) && e.getClickCount() == 1) {
+				showPopupMenu(selectedNode, file, e.getX(), e.getY());
+			}
+		}
+	}
+
+	private void showPopupMenu(DefaultMutableTreeNode node, File file, int x, int y) {
+		JPopupMenu menu = new JPopupMenu();
+
+		boolean isRoot = node.getParent() == null;
+
+		if (file.isDirectory()) {
+			JMenuItem addFolder = new JMenuItem("Add Folder");
+			JMenuItem addFile = new JMenuItem("Add File");
+			JMenuItem rename = new JMenuItem("Rename");
+
+			addFolder.addActionListener(ev -> createFileOrFolder(node, file, true, x, y));
+			addFile.addActionListener(ev -> createFileOrFolder(node, file, false, x, y));
+			rename.addActionListener(ev -> renameNode(node, file, x, y));
+
+			menu.add(addFolder);
+			menu.add(addFile);
+			menu.addSeparator();
+			menu.add(rename);
+
+			if (!isRoot) {
+				JMenuItem delete = new JMenuItem("Delete Folder");
+				delete.addActionListener(ev -> {
+					int confirm = JOptionPane.showConfirmDialog(null, "Delete this folder?", "Confirm", JOptionPane.YES_NO_OPTION);
+					if (confirm == JOptionPane.YES_OPTION) {
+						deleteRecursively(file);
+						refreshTree();
+					}
+				});
+				menu.addSeparator();
+				menu.add(delete);
+			}
+
+		} else {
+			JMenuItem open = new JMenuItem("Open File");
+			JMenuItem rename = new JMenuItem("Rename");
+			JMenuItem delete = new JMenuItem("Delete File");
+
+			open.addActionListener(ev -> System.out.println("Opening file: " + file.getAbsolutePath()));
+			rename.addActionListener(ev -> renameNode(node, file, x, y));
+			delete.addActionListener(ev -> {
+				int confirm = JOptionPane.showConfirmDialog(null, "Delete this file?", "Confirm", JOptionPane.YES_NO_OPTION);
+				if (confirm == JOptionPane.YES_OPTION) {
+					file.delete();
+					refreshTree();
+				}
+			});
+
+			menu.add(open);
+			menu.addSeparator();
+			menu.add(rename);
+			menu.addSeparator();
+			menu.add(delete);
+		}
+
+		menu.show(tree, x, y);
+	}
+
+	private void createFileOrFolder(DefaultMutableTreeNode parentNode, File parentFile, boolean folder, int x, int y) {
+		String name = showFloatingInput("Enter " + (folder ? "folder" : "file") + " name:", x, y, null);
+		if (name == null || name.isBlank()) {
+			return;
+		}
+
+		File newFile = new File(parentFile, name);
+		try {
+			boolean created;
+			if (folder) {
+				created = newFile.mkdir();
+			} else {
+				created = newFile.createNewFile();
+			}
+
+			if (created) {
+				refreshTree();
+			} else {
+				JOptionPane.showMessageDialog(this, "Failed to create " + (folder ? "folder" : "file"));
+			}
+		} catch (IOException ex) {
+			JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
+		}
+	}
+
+	private void renameNode(DefaultMutableTreeNode node, File file, int x, int y) {
+		String newName = showFloatingInput("Rename to:", x, y, file);
+		if (newName == null || newName.isBlank()) {
+			return;
+		}
+
+		File renamedFile = new File(file.getParentFile(), newName);
+		boolean success = file.renameTo(renamedFile);
+		if (success) {
+			node.setUserObject(renamedFile);
+			treeModel.nodeChanged(node);
+		} else {
+			JOptionPane.showMessageDialog(this, "Failed to rename file/folder");
 		}
 	}
 
@@ -149,5 +191,41 @@ public class FileTree extends JPanel{
 			}
 		}
 		file.delete();
+	}
+
+	private String showFloatingInput(String message, int x, int y, File file) {
+		JDialog dialog = new JDialog(TreeStudio.frame, "Input", true);
+		dialog.setUndecorated(true);
+		dialog.setLayout(new BorderLayout());
+
+		JTextField textField = new JTextField(20);
+		if (file != null)
+			textField.setText(file.getName());
+		
+		JButton ok = new JButton("OK");
+		JButton cancel = new JButton("Cancel");
+
+		JPanel panel = new JPanel();
+		panel.add(ok);
+		panel.add(cancel);
+
+		dialog.add(new JLabel(message), BorderLayout.NORTH);
+		dialog.add(textField, BorderLayout.CENTER);
+		dialog.add(panel, BorderLayout.SOUTH);
+
+		final String[] result = new String[1];
+
+		ok.addActionListener(e -> {
+			result[0] = textField.getText();
+			dialog.dispose();
+		});
+		cancel.addActionListener(e -> dialog.dispose());
+
+		dialog.pack();
+		Point loc = tree.getLocationOnScreen();
+		dialog.setLocation(loc.x + x, loc.y + y);
+		dialog.setVisible(true);
+
+		return result[0];
 	}
 }
