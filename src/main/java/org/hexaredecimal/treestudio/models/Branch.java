@@ -88,17 +88,10 @@ public class Branch {
 		double d1, d2, L1, L2;
 		double taperMult = config.getTaperMult();
 
-		if (random.nextDouble() < 0.5) {
-			d1 = fd * d * taperMult;
-			d2 = (1 - fd) * d * taperMult;
-			L1 = Math.pow(fd, gamma) * L;
-			L2 = Math.pow(1 - fd, gamma) * L;
-		} else {
-			d2 = fd * d * taperMult;
-			d1 = (1 - fd) * d * taperMult;
-			L2 = Math.pow(fd, gamma) * L;
-			L1 = Math.pow(1 - fd, gamma) * L;
-		}
+		d2 = fd * d * taperMult;
+		d1 = (1 - fd) * d * taperMult;
+		L2 = Math.pow(fd, gamma) * L;
+		L1 = Math.pow(1 - fd, gamma) * L;
 
 		double th0 = Math.atan((sq(L1 * d1) - sq(L2 * d2))
 						/ (sq(L1 * d1) + sq(L2 * d2)) * Math.tan(dth));
