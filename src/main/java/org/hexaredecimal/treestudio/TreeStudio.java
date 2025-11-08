@@ -7,15 +7,18 @@ package org.hexaredecimal.treestudio;
 import org.hexaredecimal.treestudio.utils.Icons;
 import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatLightLaf;
+import de.cerus.jgif.GifImage;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import org.hexaredecimal.treestudio.config.TreeConfig;
 import org.hexaredecimal.treestudio.events.AppActions;
-import org.hexaredecimal.treestudio.export.GifSequenceWriter;
+import org.hexaredecimal.treestudio.ui.ColorPickerButton;
 import org.hexaredecimal.treestudio.ui.FileTree;
+import org.hexaredecimal.treestudio.ui.StrippedProgressBar;
 import org.hexaredecimal.treestudio.ui.TreePanel;
 
 public class TreeStudio extends JFrame {
@@ -50,11 +53,13 @@ public class TreeStudio extends JFrame {
 	public JSlider sFlowerDensity;
 
 	// Color settings
-	public Color branchColor = new Color(38, 25, 13);
-	public Color leafBaseColor = new Color(59, 145, 15);
-	public Color bgColor = new Color(167, 213, 242);
-	public Color flowerColor = new Color(255, 105, 180);
-	public Color flowerPolenColor = new Color(255, 220, 0);
+	public ColorPickerButton branchColor;
+	public ColorPickerButton leafBaseColor;
+	public ColorPickerButton bgColor;
+	public ColorPickerButton flowerColor;
+	public ColorPickerButton flowerPolenColor;
+
+	private StrippedProgressBar exportBar;
 
 	// Config object holding references to controls
 	private TreeConfig config;
@@ -67,7 +72,7 @@ public class TreeStudio extends JFrame {
 		setLayout(new BorderLayout());
 
 		setIconImage(Icons.getIcon("appicon").getImage());
-		
+
 		createControlPanel();
 		createBottomPanel();
 		JScrollPane scrollPane = new JScrollPane(controlPanel);
@@ -97,7 +102,6 @@ public class TreeStudio extends JFrame {
 		mainSplit.setDividerLocation(180);
 
 		add(mainSplit, BorderLayout.CENTER);
-
 
 		addKeyListener(new KeyAdapter() {
 			@Override
@@ -150,6 +154,9 @@ public class TreeStudio extends JFrame {
 		fileMenu.add(new JSeparator());
 		fileMenu.add(new JMenuItem(AppActions.SAVE));
 		fileMenu.add(new JMenuItem(AppActions.SAVEAS));
+		fileMenu.add(new JSeparator());
+		fileMenu.add(new JMenuItem(AppActions.EXPORT_PNG));
+		fileMenu.add(new JMenuItem(AppActions.EXPORT_GIF));
 		fileMenu.add(new JSeparator());
 		fileMenu.add(new JMenuItem(AppActions.CLOSE_TREE));
 
@@ -231,7 +238,7 @@ public class TreeStudio extends JFrame {
 		controlPanel.add(new JSeparator());
 		addSectionLabel("Wind Properties");
 		sW = addSlider("Wind Strength", 0, 200, 100, 100.0);
-		sS = addSlider("Wind Speed", 0, 200, 100, 100.0);
+		sS = addSlider("Wind Speed", 0, 4000, 100, 100.0);
 
 		controlPanel.add(new JSeparator());
 		addSectionLabel("Extended Controls");
@@ -248,35 +255,40 @@ public class TreeStudio extends JFrame {
 		colorsPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		addSectionLabel("Colors", colorsPanel);
 
-		colorsPanel.add(createColorButton("Branch Color", branchColor, c -> {
-			branchColor = c;
+		branchColor = new ColorPickerButton("Branch Color", new Color(38, 25, 13));
+		leafBaseColor = new ColorPickerButton("Leaf Base Color", new Color(59, 145, 15));
+		flowerColor = new ColorPickerButton("Flower Color", new Color(200, 200, 242));
+		flowerPolenColor = new ColorPickerButton("Flower Polen Color", new Color(150, 130, 30));
+		bgColor = new ColorPickerButton("Background Color", new Color(167, 213, 242));
+
+		branchColor.addOnChangeListerner(c -> {
 			treePanel.regenerateTree();
-		}));
-		colorsPanel.add(Box.createVerticalStrut(5));
+		});
 
-		colorsPanel.add(createColorButton("Leaf Base Color", leafBaseColor, c -> {
-			leafBaseColor = c;
+		leafBaseColor.addOnChangeListerner(c -> {
 			treePanel.regenerateTree();
-		}));
+		});
 
-		colorsPanel.add(createColorButton("Flower Color", flowerColor, c -> {
-			flowerColor = c;
+		flowerColor.addOnChangeListerner(c -> {
 			treePanel.regenerateTree();
-		}));
+		});
 
-		colorsPanel.add(createColorButton("Flower Polen Color", flowerPolenColor, c -> {
-			flowerPolenColor = c;
+		flowerPolenColor.addOnChangeListerner(c -> {
 			treePanel.regenerateTree();
-		}));
+		});
 
-		colorsPanel.add(Box.createVerticalStrut(5));
-
-		colorsPanel.add(createColorButton("Background Color", bgColor, c -> {
-			bgColor = c;
+		bgColor.addOnChangeListerner(c -> {
 			if (treePanel != null) {
-				treePanel.repaint();
+				treePanel.regenerateTree();
 			}
-		}));
+		});
+
+		colorsPanel.add(branchColor);
+		colorsPanel.add(leafBaseColor);
+		colorsPanel.add(flowerColor);
+		colorsPanel.add(flowerPolenColor);
+		colorsPanel.add(Box.createVerticalStrut(5));
+		colorsPanel.add(bgColor);
 	}
 
 	private void createBottomPanel() {
@@ -301,11 +313,18 @@ public class TreeStudio extends JFrame {
 		Box rightBox = Box.createHorizontalBox();
 		rightBox.add(Box.createHorizontalGlue()); // Push components to the right
 		rightBox.add(lastSaved);
-		rightBox.add(Box.createHorizontalStrut(10)); // Add spacing between labels
+		rightBox.add(Box.createHorizontalStrut(50)); // Add spacing between labels
 		rightBox.add(new JSeparator(JSeparator.VERTICAL));
 		rightBox.add(Box.createHorizontalStrut(10)); // Add spacing between labels
 		rightBox.add(exportLabel);
-		rightBox.add(new JProgressBar(0, 100));
+
+		exportBar = new StrippedProgressBar(20, rightBox.getHeight());
+		exportBar.setBackgroundColor(Color.DARK_GRAY);
+		exportBar.setProgressColor(new Color(167, 213, 242));
+		exportBar.setStripeWidth(20);
+		exportBar.setStripeSpeed(4);
+
+		rightBox.add(exportBar);
 		rightBox.add(Box.createHorizontalStrut(10)); // Add spacing between labels
 
 		// Add the components to the toolbar
@@ -314,7 +333,7 @@ public class TreeStudio extends JFrame {
 		toolBar.add(rightBox);
 		add(toolBar, BorderLayout.SOUTH);
 	}
-	
+
 	private void addSectionLabel(String text) {
 		JLabel label = new JLabel(text);
 		label.putClientProperty("FlatLaf.styleClass", "h2");
@@ -396,22 +415,42 @@ public class TreeStudio extends JFrame {
 	public void exportGIF() {
 		// Simplified: write currently buffered image frames into a GIF using GifSequenceWriter
 		new Thread(() -> {
-			try {
-				java.io.File file = new java.io.File("anim.gif");
-				if (!file.getName().toLowerCase().endsWith(".gif")) {
-					file = new java.io.File(file.getAbsolutePath() + ".gif");
-				}
-				int delay = 200;
-				javax.imageio.stream.ImageOutputStream output = new javax.imageio.stream.FileImageOutputStream(file);
-				GifSequenceWriter writer = new GifSequenceWriter(output, BufferedImage.TYPE_INT_ARGB, delay, true);
-				writer.writeToSequence(treePanel.getBuffer());
-				writer.close();
-				output.close();
-				JOptionPane.showMessageDialog(this, "GIF exported successfully!");
-			} catch (IOException e) {
-				JOptionPane.showMessageDialog(this, "Error exporting GIF: " + e.getMessage());
+			var file = new File("anim.gif");
+			if (!file.getName().toLowerCase().endsWith(".gif")) {
+				file = new File(file.getAbsolutePath() + ".gif");
 			}
+			int delay = 0;
+			GifImage gif = new GifImage();
+			gif.setOutputFile(file);
+			gif.repeatInfinitely(true);
+
+			int frames = 60;
+			for (int i = 0; i < frames; ++i) {
+				BufferedImage exportFrame = new BufferedImage(treePanel.getWidth(), treePanel.getHeight(), BufferedImage.TYPE_INT_ARGB);
+				Graphics graphics = exportFrame.getGraphics();
+				graphics.setColor(Color.WHITE);
+				graphics.fillRect(0, 0, treePanel.getWidth(), treePanel.getHeight());
+				treePanel.paint(graphics);
+				debugGifFrame(i, graphics);
+				graphics.dispose();
+
+				gif.addFrame(exportFrame);
+
+				double percent = ((double) i) / frames;
+				exportBar.setValue((int) (percent * 100));
+			}
+
+			gif.save();
+			JOptionPane.showMessageDialog(this, "GIF exported successfully!");
+			exportBar.setValue(0);
 		}).start();
+	}
+
+	private void debugGifFrame(int frame, Graphics graphics) {
+		graphics.setColor(Color.BLACK);
+		graphics.drawRect(30, 30, 100, 60);
+		graphics.setColor(Color.RED);
+		graphics.drawString("FRAME " + frame, 50, 50);
 	}
 
 	public static void start(String[] args) {
