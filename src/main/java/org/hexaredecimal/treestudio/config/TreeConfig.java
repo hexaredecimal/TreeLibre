@@ -93,22 +93,22 @@ public class TreeConfig {
 	}
 
 	public Color getBranchColor() {
-		return frame.branchColor;
+		return frame.branchColor.getSelectedColor();
 	}
 
 	public Color getLeafBaseColor() {
-		return frame.leafBaseColor;
+		return frame.leafBaseColor.getSelectedColor();
 	}
 
 	public Color getBgColor() {
-		return frame.bgColor;
+		return frame.bgColor.getSelectedColor();
 	}
 
 	public Color getFlowerColor() {
-		return frame.flowerColor;
+		return frame.flowerColor.getSelectedColor();
 	}
 
 	public Color getFlowerPolenColor() {
-		return frame.flowerPolenColor;
+		return frame.flowerPolenColor.getSelectedColor();
 	}
 }
