@@ -39,6 +39,10 @@ public class ColorPickerButton extends JPanel {
 		add(spectrumPanel);
 	}
 
+	public void setSelectedColor(Color selectedColor) {
+		this.selectedColor = selectedColor;
+	}
+
 	public Color getSelectedColor() {
 		return selectedColor;
 	}
