@@ -59,14 +59,14 @@ public class AppActions {
 					.icon("save")
 					.tooltip("Save")
 					.shortcut("control S")
-					.handler(e -> System.exit(0))
+					.handler(e -> TreeStudio.frame.saveTree())
 					.build();
 
 	public static final Action SAVEAS = AppAction
 					.create("Save As...")
 					.icon("save-as")
 					.tooltip("Save")
-					.handler(e -> System.exit(0))
+					.handler(e -> TreeStudio.frame.saveTreeAs())
 					.build();
 
 	public static final Action OPEN_TREE = AppAction
@@ -74,14 +74,14 @@ public class AppActions {
 					.icon("file")
 					.tooltip("Open a tree file")
 					.shortcut("control O")
-					.handler(e -> System.exit(0))
+					.handler(e -> TreeStudio.frame.openTreeFile())
 					.build();
 
 	public static final Action CLOSE_TREE = AppAction
 					.create("Close Project")
 					.icon("close")
 					.tooltip("Close the currently selected tree")
-					.handler(e -> System.exit(0))
+					.handler(e -> TreeStudio.frame.closeTreeFile())
 					.build();
 
 	public static final Action EXPORT_PNG = AppAction
