@@ -424,7 +424,8 @@ public class TreeStudio extends JFrame {
 			gif.setOutputFile(file);
 			gif.repeatInfinitely(true);
 
-			int frames = 60;
+			int frames = 60 * 4;
+			treePanel.timer.stop();
 			for (int i = 0; i < frames; ++i) {
 				BufferedImage exportFrame = new BufferedImage(treePanel.getWidth(), treePanel.getHeight(), BufferedImage.TYPE_INT_ARGB);
 				Graphics graphics = exportFrame.getGraphics();
@@ -434,11 +435,13 @@ public class TreeStudio extends JFrame {
 				debugGifFrame(i, graphics);
 				graphics.dispose();
 
+				treePanel.nextFrame();
 				gif.addFrame(exportFrame);
 
 				double percent = ((double) i) / frames;
 				exportBar.setValue((int) (percent * 100));
 			}
+			treePanel.timer.start();
 
 			gif.save();
 			JOptionPane.showMessageDialog(this, "GIF exported successfully!");
