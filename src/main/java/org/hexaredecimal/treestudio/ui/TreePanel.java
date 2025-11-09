@@ -6,13 +6,14 @@ package org.hexaredecimal.treestudio.ui;
  */
 import javax.swing.*;
 import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
-import java.util.Random;
-import javax.imageio.ImageIO;
 import java.io.File;
-import java.io.IOException;
+import java.util.Random;
+import org.hexaredecimal.treestudio.TreeStudio;
 import org.hexaredecimal.treestudio.config.TreeConfig;
+import org.hexaredecimal.treestudio.events.AppActions;
 import org.hexaredecimal.treestudio.models.Tree;
 
 public class TreePanel extends JPanel {
@@ -24,7 +25,6 @@ public class TreePanel extends JPanel {
 	private Point mousePos = new Point(0, 0);
 	private BufferedImage buffer;
 	private boolean needsRedraw = true;
-	private BufferedImage tileImage;
 	private final TreeConfig config;
 	private final Random random = new Random();
 
@@ -32,7 +32,6 @@ public class TreePanel extends JPanel {
 		this.config = config;
 		setBackground(config.getBgColor());
 		tree = new Tree(new double[]{450, 500}, new double[]{0, -1}, config.getTrunkLength(), config.getTrunkThickness(), config, random);
-		tileImage = loadAndResize("./PNG/Dark/texture_07.png", 32, 32);
 
 		timer = new javax.swing.Timer(16, e -> {
 			nextFrame();
@@ -46,6 +45,53 @@ public class TreePanel extends JPanel {
 				mousePos = e.getPoint();
 			}
 		});
+
+		setTransferHandler(new TransferHandler() {
+			@Override
+			public boolean canImport(TransferSupport support) {
+				return support.isDataFlavorSupported(DataFlavor.stringFlavor);
+			}
+
+			@Override
+			public boolean importData(TransferSupport support) {
+				if (!canImport(support)) {
+					return false;
+				}
+				try {
+					String filePath = (String) support.getTransferable().getTransferData(DataFlavor.stringFlavor);
+					File droppedFile = new File(filePath);
+
+					TreeStudio.frame.openTreeFile(droppedFile);
+
+					return true;
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				return false;
+			}
+		});
+
+		
+		var self = this;
+		addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent e) {
+				maybeShowPopup(e);
+			}
+
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				maybeShowPopup(e);
+			}
+
+			private void maybeShowPopup(MouseEvent e) {
+				if (e.isPopupTrigger()) {
+					var popup = TreeStudio.frame.getPopUp();
+					popup.show(self, e.getX(), e.getY());
+				}
+			}
+		});
+
 	}
 
 	public void nextFrame() {
@@ -60,21 +106,6 @@ public class TreePanel extends JPanel {
 		}
 		tree.applyForce(new double[]{fX * windSpeed * 2, fY * windSpeed * 2});
 		needsRedraw = true;
-	}
-
-	public static BufferedImage loadAndResize(String path, int width, int height) {
-		try {
-			BufferedImage original = ImageIO.read(new File(path));
-			BufferedImage resized = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-			Graphics2D g2 = resized.createGraphics();
-			g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-			g2.drawImage(original, 0, 0, width, height, null);
-			g2.dispose();
-			return resized;
-		} catch (IOException ex) {
-			// don't exit the app from a utility in refactor; return null and continue
-		}
-		return null;
 	}
 
 	public void regenerateTree() {
@@ -127,4 +158,5 @@ public class TreePanel extends JPanel {
 	public BufferedImage getBuffer() {
 		return buffer;
 	}
+
 }
