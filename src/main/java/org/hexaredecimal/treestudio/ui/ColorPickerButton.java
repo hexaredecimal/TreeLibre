@@ -41,6 +41,7 @@ public class ColorPickerButton extends JPanel {
 
 	public void setSelectedColor(Color selectedColor) {
 		this.selectedColor = selectedColor;
+		this.repaint();
 	}
 
 	public Color getSelectedColor() {
