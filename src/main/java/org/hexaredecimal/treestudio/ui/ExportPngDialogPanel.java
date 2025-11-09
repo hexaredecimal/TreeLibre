@@ -4,6 +4,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.io.File;
 import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 import org.hexaredecimal.treestudio.utils.FileFilter;
 
 /**
@@ -31,6 +32,14 @@ public class ExportPngDialogPanel extends javax.swing.JPanel {
 			chooser.setDialogTitle("Save Tree as PNG");
 			if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
 				var file = chooser.getSelectedFile();
+
+				if (file.exists()) {
+					var selected = JOptionPane.showConfirmDialog(this, "Replace file?", "Replace " + file.getAbsolutePath(), JOptionPane.OK_CANCEL_OPTION);
+					if (selected != JOptionPane.OK_OPTION) {
+						return;
+					}
+				}
+				
 				if (!file.getName().toLowerCase().endsWith(".png")) {
 					file = new File(file.getAbsolutePath() + ".png");
 				}
@@ -65,7 +74,8 @@ public class ExportPngDialogPanel extends javax.swing.JPanel {
     jLabel1.setFont(new java.awt.Font("Monospaced", 0, 18)); // NOI18N
     jLabel1.setText("Export");
 
-    jPanel1.setBackground(new java.awt.Color(51, 51, 51));
+    jPanel1.setBackground(new java.awt.Color(204, 204, 204));
+    jPanel1.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
     javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
     jPanel1.setLayout(jPanel1Layout);
@@ -78,7 +88,8 @@ public class ExportPngDialogPanel extends javax.swing.JPanel {
       .addGap(0, 0, Short.MAX_VALUE)
     );
 
-    jPanel2.setBackground(new java.awt.Color(51, 51, 51));
+    jPanel2.setBackground(new java.awt.Color(204, 204, 204));
+    jPanel2.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
     javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
     jPanel2.setLayout(jPanel2Layout);
@@ -126,7 +137,7 @@ public class ExportPngDialogPanel extends javax.swing.JPanel {
               .addGroup(layout.createSequentialGroup()
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(exportPathTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 218, Short.MAX_VALUE)
+                .addComponent(exportPathTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 214, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(pickPngDir, javax.swing.GroupLayout.PREFERRED_SIZE, 117, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())

@@ -6,6 +6,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.io.File;
 import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 import org.hexaredecimal.treestudio.utils.FileFilter;
 
 /**
@@ -20,6 +21,9 @@ public class ExportGifDialogPanel extends javax.swing.JPanel {
 	public ExportGifDialogPanel() {
 		initComponents();
 
+		frameCountLabel.setText(frames + " Frames");
+		frameCountSlider.setValue(frames);
+		
 		transparentBg.addItemListener(e -> {
 			setTransparent = e.getStateChange() == ItemEvent.SELECTED;
 		});
@@ -36,11 +40,19 @@ public class ExportGifDialogPanel extends javax.swing.JPanel {
 		pickPngDir.addActionListener(action -> {
 			JFileChooser chooser = new JFileChooser(".");
 			chooser.setFileFilter(FileFilter.gifFilter);
-			chooser.setDialogTitle("Save Tree as PNG");
+			chooser.setDialogTitle("Save Tree as Gif");
 			if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
 				var file = chooser.getSelectedFile();
-				if (!file.getName().toLowerCase().endsWith(".png")) {
-					file = new File(file.getAbsolutePath() + ".png");
+
+				if (file.exists()) {
+					var selected = JOptionPane.showConfirmDialog(this, "Replace file?", "Replace " + file.getAbsolutePath(), JOptionPane.OK_CANCEL_OPTION);
+					if (selected != JOptionPane.OK_OPTION) {
+						return;
+					}
+				}
+				
+				if (!file.getName().toLowerCase().endsWith(".gif")) {
+					file = new File(file.getAbsolutePath() + ".gif");
 				}
 				selectedPath = file.getAbsolutePath();
 				exportPathTextField.setText(selectedPath);
@@ -76,7 +88,8 @@ public class ExportGifDialogPanel extends javax.swing.JPanel {
     jLabel1.setFont(new java.awt.Font("Monospaced", 0, 18)); // NOI18N
     jLabel1.setText("Export");
 
-    jPanel1.setBackground(new java.awt.Color(51, 51, 51));
+    jPanel1.setBackground(new java.awt.Color(204, 204, 204));
+    jPanel1.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
     javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
     jPanel1.setLayout(jPanel1Layout);
@@ -89,7 +102,8 @@ public class ExportGifDialogPanel extends javax.swing.JPanel {
       .addGap(0, 0, Short.MAX_VALUE)
     );
 
-    jPanel2.setBackground(new java.awt.Color(51, 51, 51));
+    jPanel2.setBackground(new java.awt.Color(204, 204, 204));
+    jPanel2.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
     javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
     jPanel2.setLayout(jPanel2Layout);
@@ -110,6 +124,7 @@ public class ExportGifDialogPanel extends javax.swing.JPanel {
 
     jLabel3.setText("Frame Count");
 
+    frameCountSlider.setMinimum(1);
     frameCountSlider.setValue(60);
 
     frameCountLabel.setText("60 Frames");
@@ -193,7 +208,7 @@ public class ExportGifDialogPanel extends javax.swing.JPanel {
 
 	private String selectedPath;
 	private boolean setTransparent;
-	private int frames;
+	private int frames = 60;
 
 
 	public String getSelectedPath() {
