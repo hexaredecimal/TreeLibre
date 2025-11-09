@@ -1,6 +1,5 @@
 package org.hexaredecimal.treestudio;
 
-import javax.swing.Timer;
 import org.hexaredecimal.treestudio.ui.Splash;
 import org.hexaredecimal.treestudio.utils.Icons;
 
