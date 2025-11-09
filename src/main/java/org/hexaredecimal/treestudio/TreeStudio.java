@@ -18,6 +18,7 @@ import javax.imageio.ImageIO;
 import org.hexaredecimal.treestudio.config.TreeConfig;
 import org.hexaredecimal.treestudio.events.AppAction;
 import org.hexaredecimal.treestudio.events.AppActions;
+import org.hexaredecimal.treestudio.ui.AboutPanel;
 import org.hexaredecimal.treestudio.ui.ColorPickerButton;
 import org.hexaredecimal.treestudio.ui.ExportGifDialogPanel;
 import org.hexaredecimal.treestudio.ui.ExportPngDialogPanel;
@@ -712,6 +713,19 @@ public final class TreeStudio extends JFrame {
 		dialog.setVisible(true);
 	}
 
+	public void showAbout() {
+		var about = new AboutPanel();
+		var dialog = new JDialog(this, "Export Gif", true);
+		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		dialog.setLayout(new BorderLayout());
+		dialog.add(about, BorderLayout.CENTER);
+		dialog.pack();
+		dialog.setLocationRelativeTo(this);
+		dialog.setVisible(true);
+		about.addOnOkListener(e -> dialog.dispose());
+	}
+	
+
 	public static void start(String[] args) {
 		SwingUtilities.invokeLater(() -> {
 
@@ -732,5 +746,6 @@ public final class TreeStudio extends JFrame {
 			frame.setVisible(true);
 		});
 	}
+
 
 }
