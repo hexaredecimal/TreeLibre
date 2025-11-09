@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tree Growth Simulation Sliders - Wiki</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Georgia', serif;
+      background-color: #f8f9fa;
+    }
+    .wiki-container {
+      max-width: 900px;
+      margin: 2rem auto;
+      background: white;
+      border: 1px solid #d1d5db;
+      border-radius: 0.5rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .wiki-header {
+      background-color: #f3f4f6;
+      border-bottom: 1px solid #d1d5db;
+      padding: 1rem 1.5rem;
+    }
+    .wiki-header h1 {
+      font-size: 1.75rem;
+      font-weight: bold;
+    }
+    .wiki-body {
+      padding: 1.5rem;
+    }
+    .wiki-section {
+      margin-bottom: 1.5rem;
+    }
+    .wiki-section h2 {
+      font-size: 1.25rem;
+      color: #1f2937;
+      font-weight: 600;
+      border-bottom: 1px solid #e5e7eb;
+      padding-bottom: 0.25rem;
+      margin-bottom: 0.75rem;
+    }
+    .wiki-section p {
+      color: #374151;
+      line-height: 1.6;
+    }
+    .slider-box {
+      background-color: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.375rem;
+      padding: 0.75rem 1rem;
+      margin-top: 0.5rem;
+    }
+    .slider-name {
+      font-weight: 600;
+      color: #111827;
+    }
+  </style>
+</head>
+<body class="p-4">
+
+  <div class="wiki-container">
+    <div class="wiki-header">
+      <h1>Tree Growth Simulation — Slider Reference</h1>
+      <p class="text-gray-600 text-sm">This wiki describes the purpose and behavior of each slider used in the procedural tree generation simulation.</p>
+    </div>
+
+    <div class="wiki-body">
+
+      <div class="wiki-section">
+        <h2>Overview</h2>
+        <p>
+          This simulation models a procedural tree that grows by recursively splitting branches based on probabilistic parameters.
+          The sliders let you adjust biological and environmental factors that affect how the tree splits, bends, and sways with wind.
+          Adjusting them dynamically updates the visual appearance of the tree in real time.
+        </p>
+      </div>
+
+      <div class="wiki-section">
+        <h2>Slider Descriptions</h2>
+
+        <div class="slider-box">
+          <p class="slider-name">Mean Mass Splitting (f)</p>
+          <p>Controls how evenly branch thickness is split between two new branches. Higher values produce one dominant branch and one smaller one, while values near 0.5 create more symmetrical branching.</p>
+        </div>
+
+        <div class="slider-box">
+          <p class="slider-name">Std Mass Splitting (f)</p>
+          <p>Sets the randomness of the mass split between branches. Increasing this adds variability to how branch thickness divides at each split, giving a more chaotic or natural look.</p>
+        </div>
+
+        <div class="slider-box">
+          <p class="slider-name">Mean Branching Angle (Δθ)</p>
+          <p>Determines the average angle between child branches. Larger angles produce wider, more open trees; smaller angles yield tighter, narrower growth patterns.</p>
+        </div>
+
+        <div class="slider-box">
+          <p class="slider-name">Std Branching Angle (Δθ)</p>
+          <p>Adds randomness to the branching angles. A higher standard deviation makes each branch deviate more unpredictably, resulting in an irregular, more organic shape.</p>
+        </div>
+
+        <div class="slider-box">
+          <p class="slider-name">Branch Length Scaling (γ)</p>
+          <p>Controls how branch length decreases as the tree splits. A smaller value causes branches to shrink rapidly, while a larger one keeps them longer and fuller.</p>
+        </div>
+
+        <div class="slider-box">
+          <p class="slider-name">Root Length</p>
+          <p>Specifies the initial length of the tree's root segment. Larger values make the base trunk longer, affecting overall tree size and reach.</p>
+        </div>
+
+        <div class="slider-box">
+          <p class="slider-name">Root Thickness</p>
+          <p>Defines the starting thickness (diameter) of the tree trunk. Thicker roots produce a sturdier, broader tree base.</p>
+        </div>
+
+        <div class="slider-box">
+          <p class="slider-name">Leaf Cutoff</p>
+          <p>Determines the minimum branch thickness below which leaves start forming. Lower values create denser foliage; higher values reduce leaf count and emphasize branch structure.</p>
+        </div>
+
+        <div class="slider-box">
+          <p class="slider-name">Wind Strength</p>
+          <p>Controls how strongly the wind affects the tree’s motion. Increasing this makes the tree sway more dramatically. Combine with <code>mouseWind</code> (toggle with ENTER) to add mouse-controlled wind direction.</p>
+        </div>
+
+      </div>
+
+      <div class="wiki-section">
+        <h2>Interaction</h2>
+        <ul class="list-disc list-inside text-gray-700">
+          <li><strong>Spacebar:</strong> Resample the tree with the current slider settings.</li>
+          <li><strong>Enter:</strong> Toggle mouse-controlled wind direction on or off.</li>
+        </ul>
+      </div>
+
+      <div class="wiki-section">
+        <h2>Notes</h2>
+        <p>
+          The parameters together influence how the tree evolves visually — the balance between <em>mass splitting</em> and <em>branch scaling</em> controls structural realism, while <em>angle deviations</em> and <em>wind effects</em> add motion and organic irregularity.
+        </p>
+      </div>
+
+    </div>
+  </div>
+
+</body>
+</html>
+
