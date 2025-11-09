@@ -1,6 +1,7 @@
 package org.hexaredecimal.treestudio.utils;
 
 import java.util.HashMap;
+import java.util.function.BiConsumer;
 
 import javax.swing.ImageIcon;
 
@@ -112,11 +113,17 @@ public class Icons {
 	};
 
 	private static HashMap<String, ImageIcon> map = new HashMap<>();
-
+	
 	public static void loadIcons() {
-		for (var icon : icons) {
+		loadIcons((a, b, c) -> { });
+	}
+	
+	public static void loadIcons(IconsProgressFunc<Integer, Integer, String> func) {
+		for (int i = 0; i < icons.length; ++i) {
+			var icon = icons[i];
 			var path = String.format("/icons/%s.png", icon);
 			var icn = Icons.class.getResource(path);
+			func.execute(i, icons.length, icon);
 			if (map.containsKey(icon)) {
 				System.err.println("Icon " + icon + " is alread loaded. Skipping");
 				continue;
@@ -131,6 +138,7 @@ public class Icons {
 			System.err.println("Icon " + icon + " loaded successfully [" + path + "]");
 		}
 	}
+	
 
 	public static ImageIcon getIcon(String icon) {
 		var ico = map.get(icon);
