@@ -1,13 +1,12 @@
 package org.hexaredecimal.treestudio.ui;
 
-
 import javax.swing.*;
 import javax.swing.tree.*;
 import java.awt.*;
+import java.awt.datatransfer.*;
 import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
-
 import org.hexaredecimal.treestudio.TreeStudio;
 
 public class FileTree extends JPanel {
@@ -25,6 +24,10 @@ public class FileTree extends JPanel {
 
 		tree.setComponentPopupMenu(new JPopupMenu());
 		tree.addMouseListener(new TreeMouseListener());
+
+		tree.setDragEnabled(true);
+		tree.setDropMode(DropMode.ON);
+		tree.setTransferHandler(new TreeFileTransferHandler());
 
 		JScrollPane scrollPane = new JScrollPane(tree);
 		add(scrollPane, BorderLayout.CENTER);
@@ -65,17 +68,14 @@ public class FileTree extends JPanel {
 		private void handleMouseEvent(MouseEvent e) {
 			var selPath = tree.getPathForLocation(e.getX(), e.getY());
 			if (selPath == null) {
-				selPath = new TreePath(treeModel.getRoot()); // default to root
+				selPath = new TreePath(treeModel.getRoot());
 			}
 			var selectedNode = (DefaultMutableTreeNode) selPath.getLastPathComponent();
 			var file = (File) selectedNode.getUserObject();
 
 			if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 2) {
 				if (!file.isDirectory()) {
-					TreeStudio.frame.selectedTreeFile = file.getAbsolutePath();
-					TreeStudio.frame.setTitle("TreeStudio - " + file.getAbsolutePath());
-					TreeStudio.frame.loadTreeBinary(file.getAbsolutePath());
-					TreeStudio.frame.treePanel.regenerateTree();
+					TreeStudio.frame.openTreeFile(file);
 				}
 			} else if (SwingUtilities.isRightMouseButton(e) && e.getClickCount() == 1) {
 				showPopupMenu(selectedNode, file, e.getX(), e.getY());
@@ -85,7 +85,6 @@ public class FileTree extends JPanel {
 
 	private void showPopupMenu(DefaultMutableTreeNode node, File file, int x, int y) {
 		JPopupMenu menu = new JPopupMenu();
-
 		boolean isRoot = node.getParent() == null;
 
 		if (file.isDirectory()) {
@@ -108,6 +107,9 @@ public class FileTree extends JPanel {
 					int confirm = JOptionPane.showConfirmDialog(null, "Delete this folder?", "Confirm", JOptionPane.YES_NO_OPTION);
 					if (confirm == JOptionPane.YES_OPTION) {
 						deleteRecursively(file);
+						if (file.getAbsolutePath().equals(TreeStudio.frame.selectedTreeFile)) {
+							TreeStudio.frame.closeTreeFile();
+						}
 						refreshTree();
 					}
 				});
@@ -172,10 +174,16 @@ public class FileTree extends JPanel {
 		}
 
 		File renamedFile = new File(file.getParentFile(), newName);
+		var filePath = file.getAbsolutePath();
 		boolean success = file.renameTo(renamedFile);
 		if (success) {
 			node.setUserObject(renamedFile);
 			treeModel.nodeChanged(node);
+
+			if (filePath.equals(TreeStudio.frame.selectedTreeFile)) {
+				TreeStudio.frame.selectedTreeFile = renamedFile.getAbsolutePath();
+				TreeStudio.frame.setTitle("TreeStudio - " + renamedFile.getAbsolutePath());
+			}
 		} else {
 			JOptionPane.showMessageDialog(this, "Failed to rename file/folder");
 		}
@@ -199,9 +207,10 @@ public class FileTree extends JPanel {
 		dialog.setLayout(new BorderLayout());
 
 		JTextField textField = new JTextField(20);
-		if (file != null)
+		if (file != null) {
 			textField.setText(file.getName());
-		
+		}
+
 		JButton ok = new JButton("OK");
 		JButton cancel = new JButton("Cancel");
 
@@ -227,5 +236,68 @@ public class FileTree extends JPanel {
 		dialog.setVisible(true);
 
 		return result[0];
+	}
+
+	private class TreeFileTransferHandler extends TransferHandler {
+
+		@Override
+		public boolean canImport(TransferSupport support) {
+			if (!support.isDrop() || !support.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+				return false;
+			}
+
+			JTree.DropLocation dl = (JTree.DropLocation) support.getDropLocation();
+			TreePath path = dl.getPath();
+			if (path == null) {
+				return false;
+			}
+
+			DefaultMutableTreeNode targetNode = (DefaultMutableTreeNode) path.getLastPathComponent();
+			File targetFile = (File) targetNode.getUserObject();
+			return targetFile.isDirectory();
+		}
+
+		@Override
+		public boolean importData(TransferSupport support) {
+			if (!canImport(support)) {
+				return false;
+			}
+
+			try {
+				String draggedPath = (String) support.getTransferable().getTransferData(DataFlavor.stringFlavor);
+				File draggedFile = new File(draggedPath);
+
+				JTree.DropLocation dl = (JTree.DropLocation) support.getDropLocation();
+				DefaultMutableTreeNode targetNode = (DefaultMutableTreeNode) dl.getPath().getLastPathComponent();
+				File targetFile = (File) targetNode.getUserObject();
+
+				File destFile = new File(targetFile, draggedFile.getName());
+				boolean success = draggedFile.renameTo(destFile);
+				if (success) {
+					refreshTree();
+					return true;
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			return false;
+		}
+
+		@Override
+		protected Transferable createTransferable(JComponent c) {
+			TreePath[] paths = tree.getSelectionPaths();
+			if (paths == null || paths.length == 0) {
+				return null;
+			}
+
+			DefaultMutableTreeNode node = (DefaultMutableTreeNode) paths[0].getLastPathComponent();
+			File file = (File) node.getUserObject();
+			return new StringSelection(file.getAbsolutePath());
+		}
+
+		@Override
+		public int getSourceActions(JComponent c) {
+			return TransferHandler.MOVE;
+		}
 	}
 }
