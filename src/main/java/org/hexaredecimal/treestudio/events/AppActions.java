@@ -150,4 +150,17 @@ public class AppActions {
 					.handler(e -> TreeStudio.frame.pickBgColor())
 					.build();
 
+	public static final Action BLUR = AppAction
+					.create("Toggle Blur")
+					.icon("paint")
+					.tooltip("Toggle blur to reduce pixelaration")
+					.handler(e -> TreeStudio.frame.treePanel.blur = !TreeStudio.frame.treePanel.blur)
+					.build();
+	
+	public static final Action TRANSPARENT = AppAction
+					.create("Toggle Transparency")
+					.icon("paint")
+					.tooltip("Toggle transparency")
+					.handler(e -> TreeStudio.frame.treePanel.fillBg = !TreeStudio.frame.treePanel.fillBg)
+					.build();
 }
