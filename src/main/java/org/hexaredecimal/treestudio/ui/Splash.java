@@ -135,7 +135,7 @@ public class Splash extends JPanel {
 	public void start(Runnable func) {
 		frame = new JFrame();
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setSize(400, 300);
+		frame.setSize(389, 296);
 		frame.setResizable(false);
 		frame.setLocationRelativeTo(null);
 		frame.setUndecorated(true);
