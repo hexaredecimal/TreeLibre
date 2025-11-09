@@ -163,4 +163,43 @@ public class AppActions {
 					.tooltip("Toggle transparency")
 					.handler(e -> TreeStudio.frame.treePanel.fillBg = !TreeStudio.frame.treePanel.fillBg)
 					.build();
+
+	public static final Action ZOOM_IN = AppAction
+					.create("Zoom In (+)")
+					.icon("zoom-in")
+					.tooltip("Zoom in into the view")
+					.handler(e -> {
+						var value = TreeStudio.frame.zoomSeek.getValue() + 50;
+						if (value > TreeStudio.frame.zoomSeek.getMaximum()) {
+							return;
+						}
+						TreeStudio.frame.zoomSeek.setValue(value);
+						TreeStudio.frame.treePanel.repaint();
+					})
+					.build();
+
+	public static final Action ZOOM_OUT = AppAction
+					.create("Zoom Out (-)")
+					.icon("zoom-out")
+					.tooltip("Zoom out into the view")
+					.handler(e -> {
+						var value = TreeStudio.frame.zoomSeek.getValue() - 50;
+						if (value < TreeStudio.frame.zoomSeek.getMinimum()) {
+							return;
+						}
+						TreeStudio.frame.zoomSeek.setValue(value);
+						TreeStudio.frame.treePanel.repaint();
+					})
+					.build();
+	
+	public static final Action ZOOM_RESET = AppAction
+					.create("Reset Zoom(100%)")
+					.icon("zoom-to-extents")
+					.tooltip("Zoom out into the view")
+					.handler(e -> {
+						TreeStudio.frame.zoomSeek.setValue(100);
+						TreeStudio.frame.treePanel.repaint();
+					})
+					.build();
+
 }
