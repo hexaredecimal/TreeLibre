@@ -22,7 +22,7 @@ public class AppActions {
 					.icon("evergreen")
 					.tooltip("Create a new normal tree")
 					.shortcut("control N")
-					.handler(e -> System.exit(0))
+					.handler(e -> TreeStudio.frame.openInternalTreeFile("trees/default.tree"))
 					.build();
 
 	public static final Action NEW_GRASS = AppAction
@@ -30,7 +30,7 @@ public class AppActions {
 					.icon("grass")
 					.tooltip("Create a new grass")
 					.shortcut("control shift N")
-					.handler(e -> System.exit(0))
+					.handler(e -> TreeStudio.frame.openInternalTreeFile("trees/grass.tree"))
 					.build();
 
 	public static final Action NEW_FLOWER = AppAction
@@ -38,7 +38,7 @@ public class AppActions {
 					.icon("cannabis")
 					.tooltip("Create a new flower")
 					.shortcut("control shift alt N")
-					.handler(e -> System.exit(0))
+					.handler(e -> TreeStudio.frame.openInternalTreeFile("trees/flower.tree"))
 					.build();
 
 	public static final Action NEW_EMPTY = AppAction
@@ -46,7 +46,7 @@ public class AppActions {
 					.icon("leaf")
 					.tooltip("Start from nothing")
 					.shortcut("control E")
-					.handler(e -> System.exit(0))
+					.handler(e -> TreeStudio.frame.openInternalTreeFile("trees/empty.tree"))
 					.build();
 
 	public static final Action SAVE = AppAction
@@ -101,7 +101,7 @@ public class AppActions {
 					.create("Configuration")
 					.icon("options")
 					.tooltip("Configure the system")
-					.handler(e -> System.exit(0))
+					.handler(e -> TreeStudio.frame.showConfig())
 					.build();
 
 	public static final Action DOCS = AppAction
@@ -109,7 +109,7 @@ public class AppActions {
 					.icon("book")
 					.shortcut("F1")
 					.tooltip("Read the documentation")
-					.handler(e -> System.exit(0))
+					.handler(e -> TreeStudio.frame.showDocs())
 					.build();
 
 	public static final Action WEBSITE = AppAction
@@ -117,7 +117,7 @@ public class AppActions {
 					.icon("open-in-browser")
 					.shortcut("F2")
 					.tooltip("Open the product site")
-					.handler(e -> System.exit(0))
+					.handler(e -> TreeStudio.frame.showWebSite())
 					.build();
 
 	public static final Action LICENSE = AppAction
@@ -125,7 +125,7 @@ public class AppActions {
 					.icon("license")
 					.shortcut("F4")
 					.tooltip("License")
-					.handler(e -> System.exit(0))
+					.handler(e -> TreeStudio.frame.showLicense())
 					.build();
 
 	public static final Action REGENERATE = AppAction
@@ -164,6 +164,13 @@ public class AppActions {
 					.handler(e -> TreeStudio.frame.treePanel.fillBg = !TreeStudio.frame.treePanel.fillBg)
 					.build();
 
+	public static final Action MOUSE_WIND = AppAction
+					.create("Toggle Pointer Wind")
+					.icon("pointer")
+					.tooltip("Toggle wind controlled by the pointer")
+					.handler(e -> TreeStudio.frame.treePanel.toggleMouseWind())
+					.build();
+	
 	public static final Action ZOOM_IN = AppAction
 					.create("Zoom In (+)")
 					.icon("zoom-in")
