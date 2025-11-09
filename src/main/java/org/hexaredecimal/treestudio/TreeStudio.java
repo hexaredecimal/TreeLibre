@@ -716,13 +716,13 @@ public final class TreeStudio extends JFrame {
 	public void showAbout() {
 		var about = new AboutPanel();
 		var dialog = new JDialog(this, "Export Gif", true);
+		about.addOnOkListener(e -> dialog.dispose());
 		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 		dialog.setLayout(new BorderLayout());
 		dialog.add(about, BorderLayout.CENTER);
 		dialog.pack();
 		dialog.setLocationRelativeTo(this);
 		dialog.setVisible(true);
-		about.addOnOkListener(e -> dialog.dispose());
 	}
 	
 
