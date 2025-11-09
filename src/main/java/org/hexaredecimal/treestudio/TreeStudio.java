@@ -192,6 +192,15 @@ public final class TreeStudio extends JFrame {
 		viewMenu.add(new JSeparator());
 		viewMenu.add(new JCheckBoxMenuItem(AppActions.BLUR));
 
+		var zoomMenu = new JMenu("Zoom");
+		zoomMenu.setIcon(Icons.getIcon("search"));
+		viewMenu.add(zoomMenu);
+		
+		zoomMenu.add(new JMenuItem(AppActions.ZOOM_IN));
+		zoomMenu.add(new JMenuItem(AppActions.ZOOM_OUT));
+		zoomMenu.add(new JSeparator());
+		zoomMenu.add(new JMenuItem(AppActions.ZOOM_RESET));
+		
 		JMenu helpMenu = new JMenu("Help");
 		menuBar.add(helpMenu);
 		helpMenu.add(new JMenuItem(AppActions.DOCS));
