@@ -2,23 +2,36 @@ package org.hexaredecimal.treestudio;
 
 import javax.swing.Timer;
 import org.hexaredecimal.treestudio.ui.Splash;
+import org.hexaredecimal.treestudio.utils.Icons;
 
 /**
  *
  * @author hexaredecimal
  */
 public class Launcher {
+
 	public static void main(String[] args) {
 		var splash = new Splash();
-		splash.setup();
-		splash.setVisible(true);
+		splash.start(() -> {
+			Icons.loadIcons((progress, length, iconName) -> {
+				splash.setLoadingText("Loading Icon Resource: " + iconName);
+				double percent = ((double) progress) / length;
+				splash.setValue((int) (percent * 100));
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException ex) {
+				}
+			});
 
-		Timer timer = new Timer(5000, e -> {
-			splash.dispose();
+			splash.setLoadingText("Starting TreeStudio");
+
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException ex) {
+			}
+
+			splash.setDone();
 			TreeStudio.start(args);
 		});
-
-		timer.setRepeats(false);
-		timer.start();
 	}
 }
