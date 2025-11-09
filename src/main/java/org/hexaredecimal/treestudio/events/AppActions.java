@@ -9,50 +9,45 @@ import org.hexaredecimal.treestudio.TreeStudio;
  */
 public class AppActions {
 
-	public static final Action EXIT
-					= AppAction
-									.create("Exit")
-									.icon("exit")
-									.tooltip("Close the application")
-									.shortcut("control shift G")
-									.handler(e -> System.exit(0))
-									.build();
+	public static final Action EXIT = AppAction
+					.create("Exit")
+					.icon("exit")
+					.tooltip("Close the application")
+					.shortcut("control shift Q")
+					.handler(e -> System.exit(0))
+					.build();
 
-	public static final Action NEW_TREE
-					= AppAction
-									.create("New Tree")
-									.icon("evergreen")
-									.tooltip("Create a new normal tree")
-									.shortcut("control N")
-									.handler(e -> System.exit(0))
-									.build();
+	public static final Action NEW_TREE = AppAction
+					.create("New Tree")
+					.icon("evergreen")
+					.tooltip("Create a new normal tree")
+					.shortcut("control N")
+					.handler(e -> System.exit(0))
+					.build();
 
-	public static final Action NEW_GRASS
-					= AppAction
-									.create("New Grass")
-									.icon("grass")
-									.tooltip("Create a new grass")
-									.shortcut("control shift N")
-									.handler(e -> System.exit(0))
-									.build();
+	public static final Action NEW_GRASS = AppAction
+					.create("New Grass")
+					.icon("grass")
+					.tooltip("Create a new grass")
+					.shortcut("control shift N")
+					.handler(e -> System.exit(0))
+					.build();
 
-	public static final Action NEW_FLOWER
-					= AppAction
-									.create("New Flower")
-									.icon("cannabis")
-									.tooltip("Create a new flower")
-									.shortcut("control shift alt N")
-									.handler(e -> System.exit(0))
-									.build();
+	public static final Action NEW_FLOWER = AppAction
+					.create("New Flower")
+					.icon("cannabis")
+					.tooltip("Create a new flower")
+					.shortcut("control shift alt N")
+					.handler(e -> System.exit(0))
+					.build();
 
-	public static final Action NEW_EMPTY
-					= AppAction
-									.create("Empty")
-									.icon("leaf")
-									.tooltip("Start from nothing")
-									.shortcut("control E")
-									.handler(e -> System.exit(0))
-									.build();
+	public static final Action NEW_EMPTY = AppAction
+					.create("Empty")
+					.icon("leaf")
+					.tooltip("Start from nothing")
+					.shortcut("control E")
+					.handler(e -> System.exit(0))
+					.build();
 
 	public static final Action SAVE = AppAction
 					.create("Save")
@@ -66,6 +61,7 @@ public class AppActions {
 					.create("Save As...")
 					.icon("save-as")
 					.tooltip("Save")
+					.shortcut("control shift S")
 					.handler(e -> TreeStudio.frame.saveTreeAs())
 					.build();
 
@@ -78,8 +74,9 @@ public class AppActions {
 					.build();
 
 	public static final Action CLOSE_TREE = AppAction
-					.create("Close Project")
+					.create("Close Tree")
 					.icon("close")
+					.shortcut("control x")
 					.tooltip("Close the currently selected tree")
 					.handler(e -> TreeStudio.frame.closeTreeFile())
 					.build();
@@ -87,6 +84,7 @@ public class AppActions {
 	public static final Action EXPORT_PNG = AppAction
 					.create("Export PNG")
 					.icon("png")
+					.shortcut("control P")
 					.tooltip("Save the tree into a png file")
 					.handler(e -> TreeStudio.frame.exportPNG())
 					.build();
@@ -94,6 +92,7 @@ public class AppActions {
 	public static final Action EXPORT_GIF = AppAction
 					.create("Export GIF")
 					.icon("gif")
+					.shortcut("control G")
 					.tooltip("Save the tree as a gif")
 					.handler(e -> TreeStudio.frame.exportGIF())
 					.build();
@@ -132,7 +131,7 @@ public class AppActions {
 	public static final Action REGENERATE = AppAction
 					.create("Regenerate")
 					.icon("undo")
-					.shortcut("control U")
+					.shortcut("control R")
 					.tooltip("Regenerate the tree")
 					.handler(e -> TreeStudio.frame.treePanel.regenerateTree())
 					.build();
@@ -144,26 +143,11 @@ public class AppActions {
 					.handler(e -> System.exit(0))
 					.build();
 
-	public static final Action IMAGE_TILE = AppAction
-					.create("Tile")
-					.icon("small-icons")
-					.tooltip("Tile the view port")
-					.handler(e -> System.exit(0))
-					.build();
-
 	public static final Action SET_BG = AppAction
 					.create("Change Background")
 					.icon("paint-bucket")
 					.tooltip("Change the viewport background color")
-					.handler(e -> System.exit(0))
-					.build();
-	
-	public static final Action GRID = AppAction
-					.create("Grid")
-					.icon("grid")
-					.tooltip("Toogle grid")
-					.shortcut("control G")
-					.handler(e -> System.exit(0))
+					.handler(e -> TreeStudio.frame.pickBgColor())
 					.build();
 
 }
