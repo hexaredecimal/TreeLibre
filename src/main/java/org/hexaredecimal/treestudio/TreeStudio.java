@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
 import org.hexaredecimal.treestudio.config.TreeConfig;
+import org.hexaredecimal.treestudio.events.AppAction;
 import org.hexaredecimal.treestudio.events.AppActions;
 import org.hexaredecimal.treestudio.ui.ColorPickerButton;
 import org.hexaredecimal.treestudio.ui.ExportGifDialogPanel;
@@ -33,12 +34,11 @@ public final class TreeStudio extends JFrame {
 	private JPanel controlPanel;
 	private JPanel colorsPanel;
 
-	JLabel lastSaved = new JLabel("Saved: Never");
+	JLabel sizeLoaded = new JLabel("0 bytes");
 	JLabel exportLabel = new JLabel("Export: ");
 	JLabel currentFilePath = new JLabel("[N/A]");
 	JLabel MemoryUsage = new JLabel("MemoryUsage");
 
-// Slider references
 	public JSlider sfM;
 	public JSlider sfS;
 	public JSlider sthM;
@@ -58,7 +58,6 @@ public final class TreeStudio extends JFrame {
 	public JSlider sTaper;
 	public JSlider sFlowerDensity;
 
-	// Color settings
 	public ColorPickerButton branchColor;
 	public ColorPickerButton leafBaseColor;
 	public ColorPickerButton bgColor;
@@ -66,15 +65,15 @@ public final class TreeStudio extends JFrame {
 	public ColorPickerButton flowerPolenColor;
 
 	private StrippedProgressBar exportBar;
-	private FileTree fileTree;
+	private final FileTree fileTree;
+	private final Runtime runtime = Runtime.getRuntime();
 
-	// Config object holding references to controls
 	private final TreeConfig config;
 
 	public static TreeStudio frame;
 
 	public TreeStudio() {
-		closeTreeFile();
+		closeTree();
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setLayout(new BorderLayout());
 
@@ -90,7 +89,6 @@ public final class TreeStudio extends JFrame {
 		colorScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 		colorScrollPane.setPreferredSize(new Dimension(350, 0));
 
-		// construct config AFTER sliders/colors created
 		config = new TreeConfig(this);
 
 		treePanel = new TreePanel(config);
@@ -130,6 +128,20 @@ public final class TreeStudio extends JFrame {
 	public void createMenuAndToolbar() {
 		createMenuBar();
 		createToolBar();
+	}
+
+	public JPopupMenu getPopUp() {
+		JPopupMenu popupMenu = new JPopupMenu();
+		popupMenu.add(AppActions.REGENERATE);
+		popupMenu.add(new JSeparator());
+		popupMenu.add(AppActions.SAVE);
+		popupMenu.add(AppActions.SAVEAS);
+		popupMenu.add(new JSeparator());
+		popupMenu.add(AppActions.EXPORT_PNG);
+		popupMenu.add(AppActions.EXPORT_GIF);
+		popupMenu.add(new JSeparator());
+		popupMenu.add(AppActions.CLOSE_TREE);
+		return popupMenu;
 	}
 
 	private void createMenuBar() {
@@ -175,10 +187,7 @@ public final class TreeStudio extends JFrame {
 		JMenu viewMenu = new JMenu("Viewport");
 		menuBar.add(viewMenu);
 
-		viewMenu.add(new JMenuItem(AppActions.IMAGE_TILE));
 		viewMenu.add(new JMenuItem(AppActions.SET_BG));
-		viewMenu.add(new JSeparator());
-		viewMenu.add(new JMenuItem(AppActions.GRID));
 
 		JMenu helpMenu = new JMenu("Help");
 		menuBar.add(helpMenu);
@@ -219,7 +228,6 @@ public final class TreeStudio extends JFrame {
 
 		addSectionLabel("Fractal Tree Parameters");
 
-		// Original fractal controls
 		sfM = addSlider("Mean mass splitting (f)", 1, 100, 60, 100.0);
 		sfS = addSlider("Std mass splitting (f)", 0, 10, 0, 100.0);
 		sthM = addSlider("Mean branching angle", 0, 157, 26, 100.0);
@@ -250,13 +258,11 @@ public final class TreeStudio extends JFrame {
 		controlPanel.add(new JSeparator());
 		addSectionLabel("Extended Controls");
 
-		// New controls
 		sTrunkHeight = addSlider("Trunk Height Multiplier", 50, 200, 100, 100.0);
 		sTrunkWidth = addSlider("Trunk Width Multiplier", 50, 200, 100, 100.0);
 		sBranchLength = addSlider("Branch Length Multiplier", 50, 200, 100, 100.0);
 		sTaper = addSlider("Taper Effect", 50, 109, 105, 100.0);
 
-		// Color controls
 		colorsPanel = new JPanel();
 		colorsPanel.setLayout(new BoxLayout(colorsPanel, BoxLayout.Y_AXIS));
 		colorsPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -300,29 +306,35 @@ public final class TreeStudio extends JFrame {
 
 	private void createBottomPanel() {
 		JToolBar toolBar = new JToolBar();
-		toolBar.setFloatable(false); // Make the toolbar fixed
+		toolBar.setFloatable(false);
 
-		// Create the left label
-		// Create the two right labels
-		// Use a Box for right alignment of the labels
 		this.add(toolBar, BorderLayout.SOUTH);
 
 		Box leftBox = Box.createHorizontalBox();
-		leftBox.add(Box.createHorizontalStrut(10)); // Add spacing between labels
+		leftBox.add(Box.createHorizontalStrut(10));
 		leftBox.add(currentFilePath);
-		leftBox.add(Box.createHorizontalStrut(10)); // Add spacing between labels
+		leftBox.add(Box.createHorizontalStrut(10));
 		leftBox.add(new JSeparator(JSeparator.VERTICAL));
-		leftBox.add(Box.createHorizontalStrut(10)); // Add spacing between labels
+		leftBox.add(Box.createHorizontalStrut(10));
 		leftBox.add(MemoryUsage);
-		leftBox.add(Box.createHorizontalStrut(10)); // Add spacing between labels
+
+		var timer = new Timer(1000, e -> {
+			long total = runtime.totalMemory();
+			long free = runtime.freeMemory();
+			long used = total - free;
+			MemoryUsage.setText("Memory: " + byteScaling(used) + " / " + byteScaling(runtime.maxMemory()));
+		});
+		timer.start();
+
+		leftBox.add(Box.createHorizontalStrut(10));
 		leftBox.add(new JSeparator(JSeparator.VERTICAL));
 
 		Box rightBox = Box.createHorizontalBox();
-		rightBox.add(Box.createHorizontalGlue()); // Push components to the right
-		rightBox.add(lastSaved);
-		rightBox.add(Box.createHorizontalStrut(50)); // Add spacing between labels
+		rightBox.add(Box.createHorizontalGlue());
+		rightBox.add(sizeLoaded);
+		rightBox.add(Box.createHorizontalStrut(50));
 		rightBox.add(new JSeparator(JSeparator.VERTICAL));
-		rightBox.add(Box.createHorizontalStrut(10)); // Add spacing between labels
+		rightBox.add(Box.createHorizontalStrut(10));
 		rightBox.add(exportLabel);
 
 		exportBar = new StrippedProgressBar(20, rightBox.getHeight());
@@ -332,11 +344,10 @@ public final class TreeStudio extends JFrame {
 		exportBar.setStripeSpeed(4);
 
 		rightBox.add(exportBar);
-		rightBox.add(Box.createHorizontalStrut(10)); // Add spacing between labels
+		rightBox.add(Box.createHorizontalStrut(10));
 
-		// Add the components to the toolbar
-		toolBar.add(leftBox); // Left-aligned label
-		toolBar.add(Box.createHorizontalGlue()); // Filler to push subsequent components to the right
+		toolBar.add(leftBox);
+		toolBar.add(Box.createHorizontalGlue());
 		toolBar.add(rightBox);
 		add(toolBar, BorderLayout.SOUTH);
 	}
@@ -373,7 +384,7 @@ public final class TreeStudio extends JFrame {
 		slider.addChangeListener(e -> {
 			jLabel.setText(label + ": " + String.format("%.4f", slider.getValue() / scale));
 			if (treePanel != null) {
-				// Regenerate tree structure when sliders change (except wind)
+
 				if (!label.contains("Wind")) {
 					treePanel.regenerateTree();
 				} else {
@@ -456,7 +467,6 @@ public final class TreeStudio extends JFrame {
 			bin.write(sTaper.getValue());
 			bin.write(sFlowerDensity.getValue());
 
-			//colors
 			bin.write(branchColor.getSelectedColor().getRGB());
 			bin.write(leafBaseColor.getSelectedColor().getRGB());
 			bin.write(bgColor.getSelectedColor().getRGB());
@@ -464,6 +474,13 @@ public final class TreeStudio extends JFrame {
 			bin.write(flowerPolenColor.getSelectedColor().getRGB());
 		} catch (IOException ex) {
 			JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+		}
+	}
+
+	public void pickBgColor() {
+		Color c = JColorChooser.showDialog(this, "Pick a color",bgColor.getSelectedColor());
+		if (c != null) {
+			bgColor.setSelectedColor(c);
 		}
 	}
 
@@ -513,24 +530,82 @@ public final class TreeStudio extends JFrame {
 		chooser.setDialogTitle("Open Tree file");
 		if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
 			var file = chooser.getSelectedFile();
-			selectedTreeFile = file.getAbsolutePath();
-			loadTreeBinary(selectedTreeFile);
-			treePanel.regenerateTree();
-			this.setTitle("TreeStudio - " + selectedTreeFile);
-			currentFilePath.setText("[" + selectedTreeFile + "]");
+			openTreeFile(file);
+			sizeLoaded.setText(byteScaling(file.length()));
 		}
 	}
 
-	public void closeTreeFile() {
+	public void openTreeFile(File file) {
+		selectedTreeFile = file.getAbsolutePath();
+		loadTreeBinary(selectedTreeFile);
+		treePanel.regenerateTree();
+		this.setTitle("TreeStudio - " + selectedTreeFile);
+		currentFilePath.setText("[" + selectedTreeFile + "]");
+		sizeLoaded.setText(byteScaling(file.length()));
+	}
+
+	public void closeTree() {
 		selectedTreeFile = null;
 		this.setTitle("TreeStudio");
 		currentFilePath.setText("[No Tree file loaded]");
+		sizeLoaded.setText("0 bytes loaded");
+	}
+
+	public void closeTreeFile() {
+		closeTree();
+		defaultTree();
+		treePanel.regenerateTree();
+	}
+
+	public static String byteScaling(long bytes) {
+		if (bytes < 1024) {
+			return bytes + " B";
+		}
+
+		double kb = bytes / 1024.0;
+		if (kb < 1024) {
+			return String.format("%.2f KB", kb);
+		}
+
+		double mb = kb / 1024.0;
+		if (mb < 1024) {
+			return String.format("%.2f MB", mb);
+		}
+
+		double gb = mb / 1024.0;
+		return String.format("%.2f GB", gb);
+	}
+
+	private void defaultTree() {
+		sfM.setValue(60);
+		sthM.setValue(26);
+		sthS.setValue(13);
+		sgam.setValue(38);
+		sL.setValue(600);
+		sd.setValue(1000);
+		sC.setValue(10);
+		lC.setValue(100);
+		lS.setValue(1);
+		lT.setValue(1);
+		sFlowerDensity.setValue(30);
+		sW.setValue(100);
+		sS.setValue(100);
+		sTrunkHeight.setValue(100);
+		sTrunkWidth.setValue(100);
+		sBranchLength.setValue(100);
+		sTaper.setValue(105);
+
+		branchColor.setSelectedColor(new Color(38, 25, 13));
+		leafBaseColor.setSelectedColor(new Color(59, 145, 15));
+		flowerColor.setSelectedColor(new Color(200, 200, 242));
+		flowerPolenColor.setSelectedColor(new Color(150, 130, 30));
+		bgColor.setSelectedColor(new Color(167, 213, 242));
 	}
 
 	public void exportPNG() {
 
 		var export = new ExportPngDialogPanel();
-		var dialog = new JDialog(this, "Export Gif", true);
+		var dialog = new JDialog(this, "Export Png", true);
 		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 		dialog.setLayout(new BorderLayout());
 		dialog.add(export, BorderLayout.CENTER);
@@ -624,7 +699,6 @@ public final class TreeStudio extends JFrame {
 				System.err.println("Failed to initialize LaF");
 			}
 
-			Icons.loadIcons();
 			frame = new TreeStudio();
 			frame.createMenuAndToolbar();
 			frame.setVisible(true);
