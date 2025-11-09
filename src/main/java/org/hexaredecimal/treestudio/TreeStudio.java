@@ -57,6 +57,7 @@ public final class TreeStudio extends JFrame {
 	public JSlider sBranchLength;
 	public JSlider sTaper;
 	public JSlider sFlowerDensity;
+	public JSlider zoomSeek;
 
 	public ColorPickerButton branchColor;
 	public ColorPickerButton leafBaseColor;
@@ -188,6 +189,8 @@ public final class TreeStudio extends JFrame {
 		menuBar.add(viewMenu);
 
 		viewMenu.add(new JMenuItem(AppActions.SET_BG));
+		viewMenu.add(new JSeparator());
+		viewMenu.add(new JCheckBoxMenuItem(AppActions.BLUR));
 
 		JMenu helpMenu = new JMenu("Help");
 		menuBar.add(helpMenu);
@@ -330,12 +333,13 @@ public final class TreeStudio extends JFrame {
 		leftBox.add(new JSeparator(JSeparator.VERTICAL));
 
 		Box rightBox = Box.createHorizontalBox();
-		rightBox.add(Box.createHorizontalGlue());
+		rightBox.add(Box.createHorizontalStrut(150));
 		rightBox.add(sizeLoaded);
-		rightBox.add(Box.createHorizontalStrut(50));
+		rightBox.add(Box.createHorizontalStrut(10));
 		rightBox.add(new JSeparator(JSeparator.VERTICAL));
 		rightBox.add(Box.createHorizontalStrut(10));
 		rightBox.add(exportLabel);
+		rightBox.add(new JSeparator(JSeparator.VERTICAL));
 
 		exportBar = new StrippedProgressBar(20, rightBox.getHeight());
 		exportBar.setBackgroundColor(Color.DARK_GRAY);
@@ -346,6 +350,13 @@ public final class TreeStudio extends JFrame {
 		rightBox.add(exportBar);
 		rightBox.add(Box.createHorizontalStrut(10));
 
+		var zoomLabel = new JLabel("Zoom:");
+		zoomSeek = new JSlider(0, 200, 100);
+		zoomSeek.setSize(50, zoomSeek.getHeight());
+		rightBox.add(zoomLabel);
+		rightBox.add(zoomSeek);
+
+		
 		toolBar.add(leftBox);
 		toolBar.add(Box.createHorizontalGlue());
 		toolBar.add(rightBox);
@@ -612,17 +623,23 @@ public final class TreeStudio extends JFrame {
 
 		export.addOnCancelListener(e -> dialog.dispose());
 		export.addOnDoneListener(e -> {
+			treePanel.fillBg = !export.isSetTransparent();
+			treePanel.timer.stop();
 			try {
 				var selectedFile = export.getSelectedPath();
 				var file = new File(selectedFile);
 				if (!file.getName().toLowerCase().endsWith(".png")) {
 					file = new java.io.File(file.getAbsolutePath() + ".png");
 				}
+				treePanel.nextFrame();
+				treePanel.regenerateImage();
 				ImageIO.write(treePanel.getBuffer(), "PNG", file);
 				dialog.dispose();
 				JOptionPane.showMessageDialog(this, "Tree exported successfully!");
 			} catch (IOException ex) {
 			}
+			treePanel.fillBg = true;
+			treePanel.timer.start();
 		});
 
 		dialog.pack();
@@ -654,6 +671,7 @@ public final class TreeStudio extends JFrame {
 				int frames = export.getFrames();
 				treePanel.timer.stop();
 				exportBar.setShowValue(true);
+				treePanel.fillBg = !export.isSetTransparent();
 				for (int i = 0; i < frames; ++i) {
 					BufferedImage exportFrame = new BufferedImage(treePanel.getWidth(), treePanel.getHeight(), BufferedImage.TYPE_INT_ARGB);
 					Graphics graphics = exportFrame.getGraphics();
@@ -668,6 +686,7 @@ public final class TreeStudio extends JFrame {
 					double percent = ((double) i) / frames;
 					exportBar.setValue((int) (percent * 100));
 				}
+				treePanel.fillBg = true;
 				treePanel.timer.start();
 
 				gif.save();
