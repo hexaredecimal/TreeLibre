@@ -109,7 +109,10 @@ public class Icons {
 		"undo",
 		"visual-effects",
 		"wind",
-		"xxx-folder"
+		"xxx-folder",
+		"zoom-in",
+		"zoom-to-extents",
+		"zoom-out",
 	};
 
 	private static HashMap<String, ImageIcon> map = new HashMap<>();
