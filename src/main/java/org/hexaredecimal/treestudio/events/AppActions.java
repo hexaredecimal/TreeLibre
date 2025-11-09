@@ -140,7 +140,7 @@ public class AppActions {
 					.create("About")
 					.icon("about")
 					.tooltip("About the product")
-					.handler(e -> System.exit(0))
+					.handler(e -> TreeStudio.frame.showAbout())
 					.build();
 
 	public static final Action SET_BG = AppAction
