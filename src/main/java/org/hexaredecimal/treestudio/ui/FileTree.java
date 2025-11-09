@@ -122,7 +122,7 @@ public class FileTree extends JPanel {
 			JMenuItem rename = new JMenuItem("Rename");
 			JMenuItem delete = new JMenuItem("Delete File");
 
-			open.addActionListener(ev -> System.out.println("Opening file: " + file.getAbsolutePath()));
+			open.addActionListener(ev -> TreeStudio.frame.openTreeFile(file));
 			rename.addActionListener(ev -> renameNode(node, file, x, y));
 			delete.addActionListener(ev -> {
 				int confirm = JOptionPane.showConfirmDialog(null, "Delete this file?", "Confirm", JOptionPane.YES_NO_OPTION);
@@ -182,7 +182,7 @@ public class FileTree extends JPanel {
 
 			if (filePath.equals(TreeStudio.frame.selectedTreeFile)) {
 				TreeStudio.frame.selectedTreeFile = renamedFile.getAbsolutePath();
-				TreeStudio.frame.setTitle("TreeStudio - " + renamedFile.getAbsolutePath());
+				TreeStudio.frame.setTitle("TreeStudio - " + renamedFile.getName());
 			}
 		} else {
 			JOptionPane.showMessageDialog(this, "Failed to rename file/folder");
