@@ -13,20 +13,29 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import javax.imageio.ImageIO;
 import org.hexaredecimal.treestudio.config.TreeConfig;
 import org.hexaredecimal.treestudio.events.AppAction;
 import org.hexaredecimal.treestudio.events.AppActions;
 import org.hexaredecimal.treestudio.ui.AboutPanel;
 import org.hexaredecimal.treestudio.ui.ColorPickerButton;
+import org.hexaredecimal.treestudio.ui.ConfigPanel;
 import org.hexaredecimal.treestudio.ui.ExportGifDialogPanel;
 import org.hexaredecimal.treestudio.ui.ExportPngDialogPanel;
 import org.hexaredecimal.treestudio.ui.FileTree;
+import org.hexaredecimal.treestudio.ui.LicensePanel;
 import org.hexaredecimal.treestudio.ui.StrippedProgressBar;
 import org.hexaredecimal.treestudio.ui.TreePanel;
 import org.hexaredecimal.treestudio.utils.Binary;
 import org.hexaredecimal.treestudio.utils.FileFilter;
+import org.hexaredecimal.treestudio.utils.ResourceLoader;
 
 public final class TreeStudio extends JFrame {
 
@@ -109,19 +118,6 @@ public final class TreeStudio extends JFrame {
 		mainSplit.setDividerLocation(180);
 
 		add(mainSplit, BorderLayout.CENTER);
-
-		addKeyListener(new KeyAdapter() {
-			@Override
-			public void keyPressed(KeyEvent e) {
-				if (e.getKeyCode() == KeyEvent.VK_SPACE) {
-					treePanel.regenerateTree();
-				}
-				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-					treePanel.toggleMouseWind();
-				}
-			}
-		});
-
 		setFocusable(true);
 		setSize(1400, 800);
 		setLocationRelativeTo(null);
@@ -134,13 +130,42 @@ public final class TreeStudio extends JFrame {
 
 	public JPopupMenu getPopUp() {
 		JPopupMenu popupMenu = new JPopupMenu();
+
+		JMenu newTreeMenu = new JMenu("New Tree");
+		newTreeMenu.setIcon(Icons.getIcon("oak-tree"));
+		popupMenu.add(newTreeMenu);
+		newTreeMenu.add(new JMenuItem(AppActions.NEW_TREE));
+		newTreeMenu.add(new JMenuItem(AppActions.NEW_GRASS));
+		newTreeMenu.add(new JMenuItem(AppActions.NEW_FLOWER));
+		newTreeMenu.add(new JSeparator());
+		newTreeMenu.add(new JMenuItem(AppActions.NEW_EMPTY));
+		
+		popupMenu.add(new JSeparator());
 		popupMenu.add(AppActions.REGENERATE);
+		popupMenu.add(new JSeparator());
+		popupMenu.add(AppActions.OPEN_TREE);
 		popupMenu.add(new JSeparator());
 		popupMenu.add(AppActions.SAVE);
 		popupMenu.add(AppActions.SAVEAS);
 		popupMenu.add(new JSeparator());
 		popupMenu.add(AppActions.EXPORT_PNG);
 		popupMenu.add(AppActions.EXPORT_GIF);
+		popupMenu.add(new JSeparator());
+
+		var zoomMenu = new JMenu("Zoom");
+		zoomMenu.setIcon(Icons.getIcon("search"));
+		popupMenu.add(zoomMenu);
+		
+		zoomMenu.add(new JMenuItem(AppActions.ZOOM_IN));
+		zoomMenu.add(new JMenuItem(AppActions.ZOOM_OUT));
+		zoomMenu.add(new JSeparator());
+		zoomMenu.add(new JMenuItem(AppActions.ZOOM_RESET));
+		
+		popupMenu.add(new JSeparator());
+		popupMenu.add(AppActions.SET_BG);
+		popupMenu.add(new JSeparator());
+		popupMenu.add(new JCheckBoxMenuItem(AppActions.BLUR));
+		popupMenu.add(AppActions.MOUSE_WIND);
 		popupMenu.add(new JSeparator());
 		popupMenu.add(AppActions.CLOSE_TREE);
 		return popupMenu;
@@ -191,7 +216,8 @@ public final class TreeStudio extends JFrame {
 
 		viewMenu.add(new JMenuItem(AppActions.SET_BG));
 		viewMenu.add(new JSeparator());
-		viewMenu.add(new JCheckBoxMenuItem(AppActions.BLUR));
+		viewMenu.add(new JMenuItem(AppActions.BLUR));
+		viewMenu.add(new JMenuItem(AppActions.MOUSE_WIND));
 
 		var zoomMenu = new JMenu("Zoom");
 		zoomMenu.setIcon(Icons.getIcon("search"));
@@ -517,7 +543,7 @@ public final class TreeStudio extends JFrame {
 				}
 				selectedTreeFile = file.getAbsolutePath();
 				saveTreeBinary(selectedTreeFile);
-				this.setTitle("TreeStudio - " + selectedTreeFile);
+				this.setTitle("TreeStudio - " + file.getName());
 				currentFilePath.setText("[" + selectedTreeFile + "]");
 				fileTree.refreshTree();
 			}
@@ -539,7 +565,7 @@ public final class TreeStudio extends JFrame {
 			selectedTreeFile = file.getAbsolutePath();
 			saveTreeBinary(selectedTreeFile);
 			treePanel.regenerateTree();
-			this.setTitle("TreeStudio - " + selectedTreeFile);
+			this.setTitle("TreeStudio - " + file.getName());
 			currentFilePath.setText("[" + selectedTreeFile + "]");
 			fileTree.refreshTree();
 		}
@@ -560,10 +586,21 @@ public final class TreeStudio extends JFrame {
 		selectedTreeFile = file.getAbsolutePath();
 		loadTreeBinary(selectedTreeFile);
 		treePanel.regenerateTree();
-		this.setTitle("TreeStudio - " + selectedTreeFile);
+		this.setTitle("TreeStudio - " + file.getName());
 		currentFilePath.setText("[" + selectedTreeFile + "]");
 		sizeLoaded.setText(byteScaling(file.length()));
 	}
+
+	public void openInternalTreeFile(String name) {
+		var file = ResourceLoader.loadFileResource(name);
+		selectedTreeFile = null;
+		loadTreeBinary(file.getAbsolutePath());
+		treePanel.regenerateTree();
+		this.setTitle("TreeStudio");
+		currentFilePath.setText("[No Tree file loaded]");
+		sizeLoaded.setText("0 bytes loaded");
+	}
+
 
 	public void closeTree() {
 		selectedTreeFile = null;
@@ -574,7 +611,7 @@ public final class TreeStudio extends JFrame {
 
 	public void closeTreeFile() {
 		closeTree();
-		defaultTree();
+		openInternalTreeFile("trees/default.tree");
 		treePanel.regenerateTree();
 	}
 
@@ -597,31 +634,6 @@ public final class TreeStudio extends JFrame {
 		return String.format("%.2f GB", gb);
 	}
 
-	private void defaultTree() {
-		sfM.setValue(60);
-		sthM.setValue(26);
-		sthS.setValue(13);
-		sgam.setValue(38);
-		sL.setValue(600);
-		sd.setValue(1000);
-		sC.setValue(10);
-		lC.setValue(100);
-		lS.setValue(1);
-		lT.setValue(1);
-		sFlowerDensity.setValue(30);
-		sW.setValue(100);
-		sS.setValue(100);
-		sTrunkHeight.setValue(100);
-		sTrunkWidth.setValue(100);
-		sBranchLength.setValue(100);
-		sTaper.setValue(105);
-
-		branchColor.setSelectedColor(new Color(38, 25, 13));
-		leafBaseColor.setSelectedColor(new Color(59, 145, 15));
-		flowerColor.setSelectedColor(new Color(200, 200, 242));
-		flowerPolenColor.setSelectedColor(new Color(150, 130, 30));
-		bgColor.setSelectedColor(new Color(167, 213, 242));
-	}
 
 	public void exportPNG() {
 
@@ -715,8 +727,9 @@ public final class TreeStudio extends JFrame {
 
 	public void showAbout() {
 		var about = new AboutPanel();
-		var dialog = new JDialog(this, "Export Gif", true);
+		var dialog = new JDialog(this, "About", true);
 		about.addOnOkListener(e -> dialog.dispose());
+		dialog.setResizable(false);
 		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 		dialog.setLayout(new BorderLayout());
 		dialog.add(about, BorderLayout.CENTER);
@@ -724,28 +737,92 @@ public final class TreeStudio extends JFrame {
 		dialog.setLocationRelativeTo(this);
 		dialog.setVisible(true);
 	}
+
+	public void showLicense() {
+		var license = new LicensePanel();
+		var dialog = new JDialog(this, "Product License", true);
+		license.addOnOkListener(e -> dialog.dispose());
+
+		dialog.setMinimumSize(new Dimension(500, dialog.getHeight()));
+		dialog.setSize(500, dialog.getHeight());
+		dialog.setResizable(false);
+		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		dialog.setLayout(new BorderLayout());
+		dialog.add(license, BorderLayout.CENTER);
+		dialog.pack();
+		dialog.setLocationRelativeTo(this);
+		dialog.setVisible(true);
+	}
+
+	public void showConfig() {
+		var configPanel = new ConfigPanel();
+		var dialog = new JDialog(this, "Config", true);
+		configPanel.addOnCancelListener(e -> dialog.dispose());
+		configPanel.addOnOkListener(e -> dialog.dispose());
+
+		dialog.setMinimumSize(new Dimension(500, dialog.getHeight()));
+		dialog.setSize(500, dialog.getHeight());
+		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		dialog.setLayout(new BorderLayout());
+		dialog.add(configPanel, BorderLayout.CENTER);
+		dialog.pack();
+		dialog.setLocationRelativeTo(this);
+		dialog.setVisible(true);
+	}
+
+	
+	public void showDocs() {
+		try {
+			URL url = ResourceLoader.loadUrlResource("text/index.html");
+			
+			File tempFile = File.createTempFile("index", ".html");
+			tempFile.deleteOnExit();
+			
+			try (InputStream in = url.openStream(); OutputStream out = new FileOutputStream(tempFile)) {
+				in.transferTo(out);
+			}
+			
+			Desktop.getDesktop().browse(tempFile.toURI());
+		}	catch (IOException ex) {
+		}
+	}
+
+	public void showWebSite() {
+		String url ="https://github.com/hexaredecimal/TreeStudio"; 
+
+		if (Desktop.isDesktopSupported()) {
+			try {
+				Desktop.getDesktop().browse(new URI(url));
+			} catch (IOException ex) {
+				System.getLogger(TreeStudio.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+			} catch (URISyntaxException ex) {
+				System.getLogger(TreeStudio.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+			}
+		} else {
+			System.err.println("Desktop browsing not supported on this system.");
+		}
+	}
 	
 
 	public static void start(String[] args) {
 		SwingUtilities.invokeLater(() -> {
 
 			try {
-				if (false) {
-					FlatDarkLaf.setup();
-					FlatDarkLaf.updateUI();
-				} else {
-					FlatLightLaf.setup();
-					FlatLightLaf.updateUI();
-				}
+				FlatLightLaf.setup();
+				FlatLightLaf.updateUI();
 			} catch (Exception ex) {
 				System.err.println("Failed to initialize LaF");
 			}
 
+			Icons.loadIcons();
 			frame = new TreeStudio();
 			frame.createMenuAndToolbar();
 			frame.setVisible(true);
 		});
 	}
+
+
+
 
 
 }
