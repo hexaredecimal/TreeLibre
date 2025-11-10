@@ -592,13 +592,24 @@ public final class TreeStudio extends JFrame {
 	}
 
 	public void openInternalTreeFile(String name) {
-		var file = ResourceLoader.loadFileResource(name);
-		selectedTreeFile = null;
-		loadTreeBinary(file.getAbsolutePath());
-		treePanel.regenerateTree();
-		this.setTitle("TreeStudio");
-		currentFilePath.setText("[No Tree file loaded]");
-		sizeLoaded.setText("0 bytes loaded");
+    try {
+      URL url = ResourceLoader.loadUrlResource(name);
+      File tempFile = File.createTempFile(name, ".tree");
+      tempFile.deleteOnExit();
+
+      try (InputStream in = url.openStream(); OutputStream out = new FileOutputStream(tempFile)) {
+        in.transferTo(out);
+      }
+
+      selectedTreeFile = null;
+      loadTreeBinary(tempFile.getAbsolutePath());
+      treePanel.regenerateTree();
+      this.setTitle("TreeStudio");
+      currentFilePath.setText("[No Tree file loaded]");
+      sizeLoaded.setText("0 bytes loaded");
+    }	catch (IOException ex) {
+    }
+
 	}
 
 
