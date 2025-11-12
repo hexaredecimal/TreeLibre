@@ -175,6 +175,7 @@ public class AppActions {
 					.create("Zoom In (+)")
 					.icon("zoom-in")
 					.tooltip("Zoom in into the view")
+          .shortcut("control ADD")
 					.handler(e -> {
 						var value = TreeStudio.frame.zoomSeek.getValue() + 50;
 						if (value > TreeStudio.frame.zoomSeek.getMaximum()) {
@@ -188,6 +189,7 @@ public class AppActions {
 	public static final Action ZOOM_OUT = AppAction
 					.create("Zoom Out (-)")
 					.icon("zoom-out")
+          .shortcut("control SUBTRACT")
 					.tooltip("Zoom out into the view")
 					.handler(e -> {
 						var value = TreeStudio.frame.zoomSeek.getValue() - 50;

@@ -543,7 +543,7 @@ public final class TreeStudio extends JFrame {
 				}
 				selectedTreeFile = file.getAbsolutePath();
 				saveTreeBinary(selectedTreeFile);
-				this.setTitle("TreeStudio - " + file.getName());
+				this.setTitle("TreeLibre - " + file.getName());
 				currentFilePath.setText("[" + selectedTreeFile + "]");
 				fileTree.refreshTree();
 			}
@@ -565,7 +565,7 @@ public final class TreeStudio extends JFrame {
 			selectedTreeFile = file.getAbsolutePath();
 			saveTreeBinary(selectedTreeFile);
 			treePanel.regenerateTree();
-			this.setTitle("TreeStudio - " + file.getName());
+			this.setTitle("TreeLibre - " + file.getName());
 			currentFilePath.setText("[" + selectedTreeFile + "]");
 			fileTree.refreshTree();
 		}
@@ -586,7 +586,7 @@ public final class TreeStudio extends JFrame {
 		selectedTreeFile = file.getAbsolutePath();
 		loadTreeBinary(selectedTreeFile);
 		treePanel.regenerateTree();
-		this.setTitle("TreeStudio - " + file.getName());
+		this.setTitle("TreeLibre - " + file.getName());
 		currentFilePath.setText("[" + selectedTreeFile + "]");
 		sizeLoaded.setText(byteScaling(file.length()));
 	}
@@ -604,7 +604,7 @@ public final class TreeStudio extends JFrame {
       selectedTreeFile = null;
       loadTreeBinary(tempFile.getAbsolutePath());
       treePanel.regenerateTree();
-      this.setTitle("TreeStudio");
+      this.setTitle("TreeLibre");
       currentFilePath.setText("[No Tree file loaded]");
       sizeLoaded.setText("0 bytes loaded");
     }	catch (IOException ex) {
@@ -615,7 +615,7 @@ public final class TreeStudio extends JFrame {
 
 	public void closeTree() {
 		selectedTreeFile = null;
-		this.setTitle("TreeStudio");
+		this.setTitle("TreeLibre");
 		currentFilePath.setText("[No Tree file loaded]");
 		sizeLoaded.setText("0 bytes loaded");
 	}
@@ -825,7 +825,6 @@ public final class TreeStudio extends JFrame {
 				System.err.println("Failed to initialize LaF");
 			}
 
-			Icons.loadIcons();
 			frame = new TreeStudio();
 			frame.createMenuAndToolbar();
 			frame.setVisible(true);

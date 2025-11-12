@@ -182,7 +182,7 @@ public class FileTree extends JPanel {
 
 			if (filePath.equals(TreeStudio.frame.selectedTreeFile)) {
 				TreeStudio.frame.selectedTreeFile = renamedFile.getAbsolutePath();
-				TreeStudio.frame.setTitle("TreeStudio - " + renamedFile.getName());
+				TreeStudio.frame.setTitle("TreeLibre - " + renamedFile.getName());
 			}
 		} else {
 			JOptionPane.showMessageDialog(this, "Failed to rename file/folder");

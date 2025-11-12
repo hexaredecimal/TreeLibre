@@ -55,11 +55,11 @@ public class AboutPanel extends javax.swing.JPanel {
     );
 
     jLabel2.setFont(new java.awt.Font("sansserif", 1, 13)); // NOI18N
-    jLabel2.setText("TreeStudio");
+    jLabel2.setText("TreeLibre");
 
     jLabel3.setText("Verson 1.0");
 
-    jLabel4.setText("<html><a href=\"https://github.com/hexaredecimal/TreeStudio\">https://github.com/hexaredecimal/TreeStudio</a></html>");
+    jLabel4.setText("<html><a href=\"https://github.com/hexaredecimal/TreeStudio\">https://github.com/hexaredecimal/TreeLibre</a></html>");
     jLabel4.setToolTipText("");
 
     jLabel5.setText("by Gama Sibusiso");

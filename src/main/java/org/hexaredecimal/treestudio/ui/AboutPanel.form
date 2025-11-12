@@ -117,7 +117,7 @@
         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
           <Font name="sansserif" size="13" style="1"/>
         </Property>
-        <Property name="text" type="java.lang.String" value="TreeStudio"/>
+        <Property name="text" type="java.lang.String" value="TreeLibre"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="jLabel3">
@@ -127,7 +127,7 @@
     </Component>
     <Component class="javax.swing.JLabel" name="jLabel4">
       <Properties>
-        <Property name="text" type="java.lang.String" value="&lt;html&gt;&lt;a href=&quot;https://github.com/hexaredecimal/TreeStudio&quot;&gt;https://github.com/hexaredecimal/TreeStudio&lt;/a&gt;&lt;/html&gt;"/>
+        <Property name="text" type="java.lang.String" value="&lt;html&gt;&lt;a href=&quot;https://github.com/hexaredecimal/TreeLibre&quot;&gt;https://github.com/hexaredecimal/TreeLibre&lt;/a&gt;&lt;/html&gt;"/>
         <Property name="toolTipText" type="java.lang.String" value=""/>
       </Properties>
     </Component>
