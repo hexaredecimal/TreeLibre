@@ -28,6 +28,7 @@ An interactive 2D fractal tree generator/simulator created in Java.
 
 # Inspirations:
 Augustge's Tree animation: [https://github.com/augustge/augustge.github.io/Animations/TreeGenerator](https://github.com/augustge/augustge.github.io/tree/master/Animations/TreeGenerator)
+
 TreeStudio: [https://www.pixarra.com/tree_studio.html](https://www.pixarra.com/tree_studio.html)
 
 # Libraries:
