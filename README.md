@@ -4,6 +4,11 @@ An interactive 2D fractal tree generator/simulator created in Java.
 > branch splitting ratios, angles, etc.
 > Each branch dynamically adapts to simulated wind and regenerates into unique tree structures at the press of a key.
 
+# Showcase
+
+<img width="60%" alt="image" src="https://github.com/user-attachments/assets/f9150436-f681-4bbd-9df4-a58c1b1c1f08" />
+
+
 # Features
 - [X] Dynamic trees
 - [X] Dynamic flowers
