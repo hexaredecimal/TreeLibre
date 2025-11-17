@@ -123,9 +123,9 @@ public final class TreeStudio extends JFrame {
 		setLocationRelativeTo(null);
 	}
 
-	public void createMenuAndToolbar() {
+	public void createMenuAndToolbar(boolean isRunningOnWeb) {
 		createMenuBar();
-		createToolBar();
+		createToolBar(isRunningOnWeb);
 	}
 
 	public JPopupMenu getPopUp() {
@@ -238,7 +238,7 @@ public final class TreeStudio extends JFrame {
 
 	}
 
-	private void createToolBar() {
+	private void createToolBar(boolean isRunningOnWeb) {
 		JToolBar toolBar = new JToolBar("Main Toolbar");
 		toolBar.setFloatable(true);
 		add(toolBar, BorderLayout.PAGE_START);
@@ -250,7 +250,7 @@ public final class TreeStudio extends JFrame {
 		};
 
 		for (var action : buttons) {
-			if (action == null) {
+			if (action == null && !isRunningOnWeb) {
 				toolBar.add(new JSeparator(JSeparator.VERTICAL));
 				continue;
 			}
@@ -825,8 +825,15 @@ public final class TreeStudio extends JFrame {
 				System.err.println("Failed to initialize LaF");
 			}
 
+			var isRunningOnWeb = args.length == 1 && "web".equals(args[0]);
+
 			frame = new TreeStudio();
-			frame.createMenuAndToolbar();
+			frame.createMenuAndToolbar(isRunningOnWeb);
+
+			if (isRunningOnWeb) {
+				frame.setUndecorated(true);
+				frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+			}
 			frame.setVisible(true);
 		});
 	}
